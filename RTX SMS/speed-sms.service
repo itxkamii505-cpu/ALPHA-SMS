@@ -1,0 +1,15 @@
+[Unit]
+Description=MAIT SMS Panel
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/ubuntu/RTX SMS
+ExecStart=/usr/bin/python3 /home/ubuntu/RTX SMS/main.py
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

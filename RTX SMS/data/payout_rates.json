@@ -1,0 +1,29 @@
+{
+  "admin_to_manager": {
+    "default_rate": 0.05,
+    "description": "Admin pays manager per OTP delivered",
+    "currency": "USD"
+  },
+  "manager_to_agent": {
+    "default_rate": 0.03,
+    "description": "Manager pays agent per OTP delivered",
+    "currency": "USD"
+  },
+  "service_rates": {
+    "WhatsApp": {"admin_to_manager": 0.05, "manager_to_agent": 0.03},
+    "Telegram": {"admin_to_manager": 0.04, "manager_to_agent": 0.025},
+    "Google": {"admin_to_manager": 0.06, "manager_to_agent": 0.035},
+    "Facebook": {"admin_to_manager": 0.045, "manager_to_agent": 0.028},
+    "Amazon": {"admin_to_manager": 0.055, "manager_to_agent": 0.032},
+    "Aadhaar": {"admin_to_manager": 0.08, "manager_to_agent": 0.05},
+    "TikTok": {"admin_to_manager": 0.04, "manager_to_agent": 0.025},
+    "Twitter": {"admin_to_manager": 0.035, "manager_to_agent": 0.022},
+    "Instagram": {"admin_to_manager": 0.04, "manager_to_agent": 0.025},
+    "Netflix": {"admin_to_manager": 0.05, "manager_to_agent": 0.03},
+    "Discord": {"admin_to_manager": 0.03, "manager_to_agent": 0.018},
+    "Snapchat": {"admin_to_manager": 0.035, "manager_to_agent": 0.022},
+    "LinkedIn": {"admin_to_manager": 0.05, "manager_to_agent": 0.03},
+    "Microsoft": {"admin_to_manager": 0.055, "manager_to_agent": 0.033},
+    "Uber": {"admin_to_manager": 0.035, "manager_to_agent": 0.022}
+  }
+}

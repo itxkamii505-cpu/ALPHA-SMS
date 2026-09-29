@@ -1,0 +1,22 @@
+{
+  "login": {
+    "limit": 5,
+    "window": 60,
+    "enabled": true
+  },
+  "signup": {
+    "limit": 3,
+    "window": 3600,
+    "enabled": true
+  },
+  "api_calls": {
+    "limit": 1000,
+    "window": 60,
+    "enabled": true
+  },
+  "page_visits": {
+    "limit": 200,
+    "window": 60,
+    "enabled": false
+  }
+}

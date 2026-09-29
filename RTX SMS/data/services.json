@@ -1,0 +1,17 @@
+[
+  {"id": 1, "name": "WhatsApp", "icon": "fab fa-whatsapp", "color": "#25d366", "description": "WhatsApp OTP verification numbers", "payout_rate": 0.05, "active": true, "created": "2026-07-03T00:00:00"},
+  {"id": 2, "name": "Telegram", "icon": "fab fa-telegram", "color": "#2aabee", "description": "Telegram OTP verification numbers", "payout_rate": 0.04, "active": true, "created": "2026-07-03T00:00:00"},
+  {"id": 3, "name": "Google", "icon": "fab fa-google", "color": "#4285f4", "description": "Google account verification", "payout_rate": 0.06, "active": true, "created": "2026-07-03T00:00:00"},
+  {"id": 4, "name": "Facebook", "icon": "fab fa-facebook", "color": "#1877f2", "description": "Facebook OTP numbers", "payout_rate": 0.045, "active": true, "created": "2026-07-03T00:00:00"},
+  {"id": 5, "name": "Amazon", "icon": "fab fa-amazon", "color": "#ff9900", "description": "Amazon account verification", "payout_rate": 0.055, "active": true, "created": "2026-07-03T00:00:00"},
+  {"id": 6, "name": "Twitter", "icon": "fab fa-twitter", "color": "#1da1f2", "description": "Twitter/X OTP numbers", "payout_rate": 0.035, "active": true, "created": "2026-07-03T00:00:00"},
+  {"id": 7, "name": "Instagram", "icon": "fab fa-instagram", "color": "#e1306c", "description": "Instagram verification numbers", "payout_rate": 0.04, "active": true, "created": "2026-07-03T00:00:00"},
+  {"id": 8, "name": "Netflix", "icon": "fas fa-film", "color": "#e50914", "description": "Netflix account OTP", "payout_rate": 0.05, "active": true, "created": "2026-07-03T00:00:00"},
+  {"id": 9, "name": "Uber", "icon": "fab fa-uber", "color": "#000000", "description": "Uber app verification", "payout_rate": 0.035, "active": true, "created": "2026-07-03T00:00:00"},
+  {"id": 10, "name": "Discord", "icon": "fab fa-discord", "color": "#5865f2", "description": "Discord account numbers", "payout_rate": 0.03, "active": true, "created": "2026-07-03T00:00:00"},
+  {"id": 11, "name": "Aadhaar", "icon": "fas fa-id-card", "color": "#ff6600", "description": "Aadhaar/India ID verification numbers", "payout_rate": 0.08, "active": true, "created": "2026-07-03T00:00:00"},
+  {"id": 12, "name": "TikTok", "icon": "fab fa-tiktok", "color": "#010101", "description": "TikTok account verification", "payout_rate": 0.04, "active": true, "created": "2026-07-03T00:00:00"},
+  {"id": 13, "name": "Snapchat", "icon": "fab fa-snapchat", "color": "#fffc00", "description": "Snapchat OTP numbers", "payout_rate": 0.035, "active": true, "created": "2026-07-03T00:00:00"},
+  {"id": 14, "name": "LinkedIn", "icon": "fab fa-linkedin", "color": "#0a66c2", "description": "LinkedIn verification", "payout_rate": 0.05, "active": true, "created": "2026-07-03T00:00:00"},
+  {"id": 15, "name": "Microsoft", "icon": "fab fa-microsoft", "color": "#00a4ef", "description": "Microsoft/Outlook OTP", "payout_rate": 0.055, "active": true, "created": "2026-07-03T00:00:00"}
+]

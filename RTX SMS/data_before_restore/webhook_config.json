@@ -1,0 +1,16 @@
+{
+  "url": "",
+  "method": "POST",
+  "secret": "",
+  "events": [
+    "otp_received",
+    "number_allocated",
+    "user_created"
+  ],
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "retry": 3,
+  "timeout": 30,
+  "active": false
+}

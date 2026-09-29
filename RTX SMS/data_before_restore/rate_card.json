@@ -1,0 +1,52 @@
+[
+  {
+    "id": 5,
+    "country": "TestLand",
+    "provider": "Manual",
+    "buy_rate": 0.01,
+    "sell_rate": 0.008,
+    "margin": "20%",
+    "active": true,
+    "created": "2026-09-26T16:19:14.470Z"
+  },
+  {
+    "id": 4,
+    "country": "Peru",
+    "provider": "Manual",
+    "buy_rate": 0.013,
+    "sell_rate": 0.011,
+    "margin": "15%",
+    "active": true,
+    "created": "2026-09-26T15:23:47.511Z"
+  },
+  {
+    "id": 3,
+    "country": "Russia MTS_KB FT1",
+    "provider": "Manual",
+    "buy_rate": 0.012,
+    "sell_rate": 0.01,
+    "margin": "17%",
+    "active": true,
+    "created": "2026-09-26T15:12:02.423Z"
+  },
+  {
+    "id": 2,
+    "country": "Peru",
+    "provider": "Manual",
+    "buy_rate": 0.013,
+    "sell_rate": 0.01,
+    "margin": "23%",
+    "active": true,
+    "created": "2026-09-26T15:03:15.614Z"
+  },
+  {
+    "id": 1,
+    "country": "United States",
+    "provider": "Manual",
+    "buy_rate": 0.08,
+    "sell_rate": 0.05,
+    "margin": "38%",
+    "active": true,
+    "created": "2026-09-25T09:48:23.031Z"
+  }
+]

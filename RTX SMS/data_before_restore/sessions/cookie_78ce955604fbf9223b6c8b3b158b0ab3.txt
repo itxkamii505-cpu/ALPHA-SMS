@@ -1,0 +1,5 @@
+# Netscape HTTP Cookie File
+# http://curl.haxx.se/rfc/cookie_spec.html
+# This is a generated file!  Do not edit.
+
+astrasms.com	FALSE	/	TRUE		PHPSESSID	gbk78mtjnjmrvg8j66nnm5i5mc

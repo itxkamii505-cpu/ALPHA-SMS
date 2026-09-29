@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Panel — ALPHA SMS</title>
+<link rel="icon" type="image/jpeg" href="/static/img/mait-sms-logo.png">
+<script>
+(function(){
+  try {
+    var s = window.__BRAND_SETTINGS__;
+    if (!s) {
+      var c = localStorage.getItem('app_brand_settings');
+      if (c) s = JSON.parse(c);
+    }
+    if (s) {
+      var hg = s.header_gradient || 'linear-gradient(180deg, #64748b 0%, #334155 50%, #0f172a 100%)';
+      var tc = s.header_text_color || '#ffffff';
+      var r = document.documentElement;
+      r.style.setProperty('--header-gradient', hg);
+      r.style.setProperty('--header-text-color', tc);
+      r.style.setProperty('--header-font-weight', s.header_font_weight || '700');
+    }
+  } catch(e) {}
+})();
+</script>
+<script src="/static/js/brand-theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css">
+<link rel="stylesheet" href="/static/css/speed-panel.css">
+<link rel="stylesheet" href="/static/css/speed-admin-skin.css">
+</head>
+<body class="light rmsui">
+
+<aside class="zy-side" id="sidebar">
+  <div class="zy-side-head">
+    <button class="zy-side-close" onclick="zyCloseSidebar()" aria-label="Close" type="button"><i class="fas fa-times"></i></button>
+    <div class="zy-avatar-lg"><img id="zy-side-logo" src="/static/img/mait-sms-logo.png" alt="ALPHA SMS"></div>
+    <div class="zy-welcome">Welcome <span id="tp-username-side">Tester</span></div>
+    <div class="zy-role">Test Panel</div>
+    <div class="zy-clock" id="zy-clock">—</div>
+  </div>
+  <nav class="zy-sidenav" id="zy-sidenav">
+    <div class="zy-snav nav-item" onclick="loadPage('dashboard')"><span class="zy-ic"><i class="fas fa-tachometer-alt"></i></span><span>Dashboard</span></div>
+    <div class="zy-snav nav-item" onclick="loadPage('test-numbers')"><span class="zy-ic"><i class="fas fa-sim-card"></i></span><span>Test Numbers</span></div>
+    <div class="zy-snav nav-item" onclick="loadPage('test-reports')"><span class="zy-ic"><i class="fas fa-chart-line"></i></span><span>Test Reports</span></div>
+  </nav>
+  <div class="zy-side-foot"></div>
+</aside>
+<div class="zy-side-backdrop" id="zy-side-backdrop" onclick="zyCloseSidebar()"></div>
+
+<div class="zy-main" id="main-wrapper">
+
+  <header class="zy-header">
+    <div class="zy-header-row" style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="zy-hamb" onclick="zyToggleMenu()" title="Menu">
+          <span></span><span></span><span></span>
+        </button>
+        <div style="display:flex;align-items:center;gap:10px;text-decoration:none;">
+          <img src="/static/img/custom-logo.png" onerror="this.src='/static/img/mait-sms-logo.png'" style="height:32px;object-fit:contain;" alt="Logo">
+          <span style="font-size:17px;font-weight:800;color:var(--header-text-color,#fff);letter-spacing:0.5px;" id="tp-brand-name">ALPHA SMS</span>
+        </div>
+      </div>
+      <div class="zy-head-right" style="display:flex;align-items:center;gap:12px;">
+        <a href="/login" class="tp-signin-btn" style="background:#0284c7;color:#ffffff;border:none;border-radius:6px;padding:7px 16px;font-size:13px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 6px rgba(0,0,0,0.2);"><i class="fas fa-arrow-right-to-bracket"></i> Sign in</a>
+      </div>
+    </div>
+    <div class="zy-mega" id="zy-mega"></div>
+  </header>
+
+  <div class="zy-body">
+    <div class="zy-crumb">
+      <a onclick="loadPage('dashboard')">Home</a><span class="zy-sep">&raquo;</span><span id="breadcrumb">Dashboard</span>
+    </div>
+    <main class="page-content" id="page-content"></main>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal()">
+  <div class="modal" id="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="modal-title">Modal</h3>
+      <button onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script src="/static/js/speed-test.js"></script>
+<script src="/static/js/speed-kit.js"></script>
+<script src="/static/js/speed-test-pages.js"></script>
+<script src="/static/js/speed-url.js"></script>
+<script src="/static/js/speed-flash.js"></script>
+<script src="/static/js/brand-theme.js"></script>
+</body>
+</html>

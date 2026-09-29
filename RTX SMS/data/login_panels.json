@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "name": "ASTRA",
+    "username": "Moeezbhatti",
+    "password": "Moeezbhatti786#",
+    "panel_url": "https://astrasms.com/login",
+    "data_url": "https://astrasms.com/agent/SMSReports",
+    "interval": 10,
+    "rows": 200,
+    "columns": null,
+    "status": "running",
+    "total_sms": 1954,
+    "last_run": "2026-09-27T16:49:44.621Z",
+    "last_error": "",
+    "created": "2026-09-25T11:38:39.366Z"
+  }
+]

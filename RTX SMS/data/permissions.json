@@ -1,0 +1,42 @@
+{
+  "Admin": {
+    "Numbers": 1,
+    "SMS": 1,
+    "SMPP": 1,
+    "Users": 1,
+    "Finance": 1,
+    "API": 1,
+    "Settings": 1,
+    "Security": 1
+  },
+  "Manager": {
+    "Numbers": 1,
+    "SMS": 1,
+    "SMPP": 1,
+    "Users": 1,
+    "Finance": 1,
+    "API": 0,
+    "Settings": 0,
+    "Security": 0
+  },
+  "Reseller": {
+    "Numbers": 1,
+    "SMS": 1,
+    "SMPP": 0,
+    "Users": 0,
+    "Finance": 1,
+    "API": 1,
+    "Settings": 0,
+    "Security": 0
+  },
+  "User": {
+    "Numbers": 1,
+    "SMS": 1,
+    "SMPP": 0,
+    "Users": 0,
+    "Finance": 0,
+    "API": 1,
+    "Settings": 0,
+    "Security": 0
+  }
+}

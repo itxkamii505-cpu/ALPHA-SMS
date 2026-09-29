@@ -1,0 +1,915 @@
+/* ══════════════════════════════════════════════════════════════
+   MAIT SMS — Manager Panel skin
+   Loaded AFTER style.css. Everything here is scoped to body.rmsui
+   ══════════════════════════════════════════════════════════════ */
+
+body.rmsui {
+  --zy-blue-top:    var(--brand-primary, #64748b);
+  --zy-blue-bot:    var(--brand-hover, #334155);
+  --zy-blue:        var(--brand-primary, #64748b);
+  --zy-blue-dark:   #1e293b;
+  --zy-sub:         var(--brand-accent, #94a3b8);
+  --zy-line:        #d5d5d5;
+  --zy-panel-head:  #f2f2f2;
+  --zy-text:        #333;
+
+  background: #fff !important;
+  color: var(--zy-text) !important;
+  font-family: var(--app-font, Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif) !important;
+  font-size: 12px; line-height: 18px; -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+body.rmsui * { box-sizing: border-box; }
+body.rmsui a { color: var(--brand-primary, #0284c7); text-decoration: none; }
+
+/* ── Desktop left sidebar ─────────────────────────────────────── */
+.zy-side {
+  position: fixed; top: 0; left: 0; bottom: 0; width: 230px; z-index: 1050;
+  background: #fff; border-right: 1px solid #cfcfcf; overflow-y: auto;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), margin-left 0.3s ease;
+}
+.zy-main {
+  margin-left: 230px; min-height: 100vh; background: #f9f9f9;
+  transition: margin-left 0.3s ease;
+}
+
+/* PC / Desktop toggle collapse */
+body.sidebar-collapsed .zy-side {
+  transform: translateX(-100%);
+}
+body.sidebar-collapsed .zy-main {
+  margin-left: 0;
+}
+
+/* Hide top mega menu completely: navigation is on the sidebar */
+.zy-mega, .adminui .zy-mega {
+  display: none !important;
+}
+
+/* Backdrop for mobile slide drawer */
+.zy-side-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 1040;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  pointer-events: none;
+}
+body.sidebar-open .zy-side-backdrop,
+.zy-side-backdrop.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+body.sidebar-open {
+  overflow: hidden;
+}
+.zy-side-close {
+  display: none;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid #c8c8c8;
+  background: #fff;
+  color: #444;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  z-index: 5;
+}
+.zy-side-close:hover {
+  background: #f0f0f0;
+  color: #111;
+}
+.zy-side-head {
+  background: #ffffff; padding: 18px 10px 14px; text-align: center;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+.zy-side-head::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--header-gradient, linear-gradient(180deg, #64748b 0%, #334155 50%, #0f172a 100%));
+  z-index: 2;
+}
+.zy-avatar-lg {
+  width: 86px; height: 86px; border-radius: 50%; margin: 0 auto 10px;
+  background: radial-gradient(circle at 35% 30%, #fdfdfd, #d8d8d8 70%, #c4c4c4);
+  border: 2px solid #ffffff; display: flex; align-items: center; justify-content: center;
+  overflow: hidden; box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+}
+.zy-avatar-lg img { width: 100%; height: 100%; object-fit: cover; }
+.zy-welcome { font-size: 12px; color: #444; font-weight: 500; }
+.zy-role    { font-size: 13px; font-weight: 800; color: #111; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+.zy-clock   { font-size: 11px; color: #666; margin-top: 3px; }
+
+.zy-sidenav { padding-bottom: 30px; }
+.zy-sidenav .zy-snav {
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  padding: 11px 12px; color: var(--header-text-color, #ffffff); font-size: 12px; font-weight: 700;
+  letter-spacing: .35px; text-transform: uppercase;
+  background: var(--header-gradient, linear-gradient(180deg, #64748b 0%, #334155 50%, #0f172a 100%));
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s ease;
+  position: relative;
+}
+.zy-sidenav .zy-snav:hover {
+  background: var(--header-gradient, linear-gradient(180deg, #64748b 0%, #334155 50%, #0f172a 100%));
+  filter: brightness(1.15);
+  padding-left: 14px;
+  color: var(--header-text-color, #ffffff);
+}
+.zy-sidenav .zy-snav.open {
+  background: var(--header-gradient, linear-gradient(180deg, #64748b 0%, #334155 50%, #0f172a 100%));
+  filter: brightness(1.22);
+  border-left: 4px solid var(--header-text-color, #ffffff);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.25);
+  color: var(--header-text-color, #ffffff);
+}
+.zy-sidenav .zy-snav.active {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border-left: 4px solid var(--brand-primary, #0284c7) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+  text-shadow: none !important;
+}
+.zy-sidenav .zy-snav.active span,
+.zy-sidenav .zy-snav.active .zy-ic,
+.zy-sidenav .zy-snav.active .zy-ic i,
+.zy-sidenav .zy-snav.active .zy-caret {
+  color: #111827 !important;
+  filter: none !important;
+}
+.zy-sidenav .zy-snav .zy-ic { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4)); color: var(--header-text-color, #ffffff); }
+.zy-sidenav .zy-snav .zy-ic .zy-icimg { width: 16px; height: 16px; object-fit: contain; display: block; }
+.zy-sidenav .zy-snav .zy-caret { margin-left: auto; font-size: 11px; opacity: .9; color: var(--header-text-color, #ffffff); transition: transform 0.25s ease; }
+.zy-sidenav .zy-snav.open .zy-caret { transform: rotate(180deg); }
+
+/* Opened Group Sub-menu: exact same theme */
+.zy-sidenav .zy-ssub { display: none; }
+.zy-sidenav .zy-ssub.open {
+  display: block !important;
+  background: var(--header-gradient, linear-gradient(180deg, #64748b 0%, #334155 50%, #0f172a 100%)) !important;
+  position: relative;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.25);
+  animation: zySubFadeSlide 0.2s ease-out;
+}
+@keyframes zySubFadeSlide {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.zy-sidenav .zy-ssub div {
+  padding: 9px 12px 9px 34px; font-size: 12px; font-weight: 600; color: var(--header-text-color, #ffffff);
+  cursor: pointer; border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  transition: all 0.18s ease;
+  position: relative;
+}
+.zy-sidenav .zy-ssub div:hover {
+  background: rgba(255, 255, 255, 0.22);
+  color: var(--header-text-color, #ffffff);
+  padding-left: 38px;
+  border-left: 4px solid var(--header-text-color, #ffffff);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+.zy-side-foot {
+  height: 26px;
+  background: var(--header-gradient, linear-gradient(180deg, #64748b 0%, #334155 50%, #0f172a 100%));
+  opacity: 0.9;
+  border-top: 1px solid rgba(0, 0, 0, 0.25);
+}
+
+/* ── Main column ──────────────────────────────────────────────── */
+.zy-main { margin-left: 230px; min-height: 100vh; background: #f9f9f9; }
+
+/* ── Header ──────────────────────────────────────────────── */
+.zy-header {
+  background: var(--header-gradient, linear-gradient(180deg, #64748b 0%, #334155 50%, #0f172a 100%)) !important;
+  color: var(--header-text-color, #fff) !important; position: relative;
+}
+.zy-header-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; min-height: 62px; gap: 12px;
+}
+.zy-logo { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.zy-logo svg { height: 52px; width: auto; display: block; }
+.zy-logo-img {
+  height: 42px; width: 42px; object-fit: cover; border-radius: 6px;
+  background: #fff; padding: 2px; box-shadow: 0 1px 3px rgba(0,0,0,.25);
+}
+.zy-head-right { display: flex; align-items: center; gap: 14px; position: relative; }
+.zy-hamb {
+  width: 46px; height: 34px; border-radius: 4px; background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 4px; cursor: pointer; padding: 0;
+}
+.zy-hamb span { display: block; width: 24px; height: 2px; background: var(--header-text-color, #fff); border-radius: 2px; }
+.zy-hamb:hover { background: rgba(255, 255, 255, 0.25); }
+.zy-user {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  font-size: 13.5px; color: var(--header-text-color, #fff); white-space: nowrap;
+  background: rgba(0, 0, 0, 0.22); border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 24px; padding: 4px 12px 4px 7px; backdrop-filter: blur(8px);
+  transition: all 0.2s ease; user-select: none;
+}
+.zy-user:hover {
+  background: rgba(255, 255, 255, 0.2); border-color: rgba(255, 255, 255, 0.45);
+  transform: translateY(-1px);
+}
+.zy-user .zy-ava {
+  width: 26px; height: 26px; border-radius: 50%; background: rgba(0, 0, 0, 0.35);
+  border: 1.5px solid rgba(255, 255, 255, 0.4); color: #facc15;
+  display: flex; align-items: center; justify-content: center; font-size: 12px;
+}
+.zy-user .zy-ava-img { width: 20px; height: 20px; object-fit: contain; }
+.zy-user .zy-ava-caret { width: 11px; height: 8px; object-fit: contain; }
+#mgr-username, #agent-username, #client-username { display: inline !important; font-weight: 600; font-size: 13.5px; color: var(--header-text-color, #fff); }
+.zy-user .fa-caret-down { font-size: 11px; opacity: 0.85; color: var(--header-text-color, #fff); }
+.zy-dot { width: 8px; height: 8px; border-radius: 50%; background: #ffffff; box-shadow: 0 0 4px rgba(255,255,255,0.7); }
+
+.zy-user-menu {
+  display: none; position: absolute; right: 0; top: calc(100% + 8px); width: 235px; z-index: 9999;
+  background: #1c2430; border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 12px; overflow: hidden;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+}
+.zy-user-menu.open { display: block; }
+.zy-user-menu .zy-um-head {
+  background: var(--header-gradient, linear-gradient(180deg, #64748b 0%, #334155 50%, #0f172a 100%));
+  color: var(--header-text-color, #fff); padding: 12px 16px; font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+.zy-user-menu a {
+  display: flex; align-items: center; gap: 11px; padding: 10px 16px;
+  font-size: 13px; font-weight: 500; color: #e2e8f0; cursor: pointer;
+  background: transparent; border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.18s ease; text-decoration: none;
+}
+.zy-user-menu a img { width: 15px; height: 15px; object-fit: contain; }
+.zy-user-menu a i { color: var(--brand-accent, #8FE51F); font-size: 13.5px; width: 18px; text-align: center; }
+.zy-user-menu a.zy-um-out, .zy-user-menu a.zy-um-logout { border-top: 1px solid rgba(255, 255, 255, 0.12); color: #f87171; font-weight: 600; }
+.zy-user-menu a.zy-um-out i, .zy-user-menu a.zy-um-logout i { color: #f87171; }
+.zy-user-menu a:hover {
+  background: var(--header-gradient, linear-gradient(180deg, #64748b 0%, #334155 50%, #0f172a 100%));
+  color: var(--header-text-color, #fff); padding-left: 20px;
+}
+.zy-user-menu a.zy-um-out:hover, .zy-user-menu a.zy-um-logout:hover {
+  background: rgba(239, 68, 68, 0.2); color: #ff8585; border-left: 4px solid #ef4444;
+}
+
+/* ── Mega menu (inline blue) ──────────────────────────────────── */
+.zy-mega { display: none; padding: 4px 14px 16px; }
+.zy-mega.open { display: block; }
+@media (min-width: 992px) {
+  .zy-mega { column-count: 3; column-gap: 26px; }
+  .zy-mega .zy-mblock { break-inside: avoid; margin-bottom: 6px; }
+}
+.zy-mblock { margin-bottom: 4px; }
+.zy-mtop {
+  display: flex; align-items: center; gap: 10px; cursor: pointer;
+  color: #fff; font-size: 12px; font-weight: 700; padding: 9px 2px;
+}
+.zy-mtop:hover { color: #d9f0ff; }
+.zy-mtop .zy-mi {
+  width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+}
+.zy-mtop .zy-mi .zy-icimg { width: 19px; height: 19px; object-fit: contain; display: block; }
+.zy-ph-ic { display: inline-flex; align-items: center; }
+.zy-ph-ic .zy-icimg { width: 19px; height: 19px; object-fit: contain; display: block; }
+.zy-msub div {
+  padding: 3px 2px 3px 26px; font-size: 12px; color: var(--zy-sub); cursor: pointer;
+}
+.zy-msub div::before { content: "○ "; font-size: 9px; margin-right: 4px; vertical-align: 2px; }
+.zy-msub div:hover { color: #fff; }
+
+/* ── Body / breadcrumb ────────────────────────────────────────── */
+.zy-body { padding: 14px 20px; }
+.zy-crumb {
+  background: linear-gradient(#f1f1f1, #dbdbdb); border: 1px solid #c2c2c2; border-radius: 4px;
+  padding: 4px 14px; font-size: 11px; line-height: 18px; color: #333; margin-bottom: 18px;
+}
+.zy-crumb a { color: #5E9800; }
+.zy-crumb .zy-sep { color: #999; margin: 0 6px; }
+
+body.rmsui .page-content { padding: 0 !important; max-width: none !important; }
+
+/* ── Dashboard glossy tiles ───────────────────────────────────── */
+.zy-tiles { display: grid; grid-template-columns: 1fr; gap: 22px; margin-bottom: 22px; }
+@media (min-width: 768px)  { .zy-tiles { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1200px) { .zy-tiles { grid-template-columns: repeat(5, 1fr); } }
+.zy-tile {
+  background: linear-gradient(180deg, #fefefe 0%, #f6f6f6 55%, #ebebeb 100%);
+  border: 1px solid #dcdcdc; border-radius: 3px; padding: 14px 8px;
+  text-align: center; cursor: pointer;
+  box-shadow: 0 0 5px rgba(0,0,0,.07);
+}
+.zy-tile:hover { background: linear-gradient(180deg,#fff,#eaeaea); border-color: #c8c8c8; }
+.zy-tile .zy-tileimg { display: block; margin: 0 auto 9px; height: 30px; width: auto; }
+.zy-tile span { font-size: 12px; color: #444; }
+
+/* ── Panels (cards) ───────────────────────────────────────────── */
+.zy-panel {
+  background: #fff; border: 1px solid #c2c2c2; border-radius: 3px;
+  margin-bottom: 20px; overflow: hidden;
+  box-shadow: inset 0 1px 0 #f9f9f9;
+}
+.zy-panel-head {
+  background: linear-gradient(180deg, #f1f1f1, #dbdbdb);
+  border-bottom: 1px solid #c2c2c2; padding: 0 10px; height: 40px;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 700; color: #333; letter-spacing: 0;
+  text-transform: uppercase;
+}
+.zy-panel-head .zy-ph-btn {
+  margin-left: auto; width: 34px; height: 34px; border: 1px solid #ccc;
+  background: linear-gradient(#fff, #ececec); border-radius: 3px; color: #444;
+  font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.zy-panel-body { padding: 10px; background: #fff; box-shadow: inset 0 0 5px #ddd; }
+.zy-chart-title { text-align: center; font-size: 16px; color: #3a3a3a; padding: 16px 0 4px; }
+.zy-chart-box { padding: 4px 8px 14px; height: 315px; }
+.zy-section-title {
+  font-size: 14px; font-weight: 700; color: #333; margin: 8px 0 6px;
+}
+
+/* ── DataTable look ───────────────────────────────────────────── */
+.zy-pager { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; padding: 10px 0 14px; }
+.zy-pager button {
+  background: linear-gradient(180deg, #dcdcdc, #bebebe); border: 1px solid #a9a9a9;
+  border-radius: 3px; padding: 3px 8px; font-size: 11px; color: #333; cursor: pointer;
+}
+.zy-pager button:hover:not(:disabled) { background: linear-gradient(180deg,#e6e6e6,#c6c6c6); }
+.zy-pager button.on { background: linear-gradient(180deg,#c9c9c9,#ababab); font-weight: 400; }
+.zy-pager button:disabled { color: #aaa; cursor: default; }
+
+.zy-dt-wrap { overflow-x: auto; }
+table.zy-dt { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.zy-dt th {
+  text-align: left; padding: 8px; font-weight: 700; color: #333;
+  border: 1px solid #ddd; white-space: nowrap; cursor: pointer; position: relative;
+}
+table.zy-dt th .zy-sort { float: right; margin-left: 10px; color: #9a9a9a; font-size: 11px; }
+table.zy-dt th.sorted .zy-sort { color: #1a6fb0; }
+table.zy-dt td {
+  padding: 8px; border: 1px solid #ddd; color: #333; vertical-align: middle; line-height: 18px;
+}
+table.zy-dt tbody tr:nth-child(odd)  td.sorted,
+table.zy-dt tbody tr:nth-child(odd)  td.zy-cbcol { background: #ebebeb; }
+table.zy-dt tbody tr:nth-child(even) td.sorted,
+table.zy-dt tbody tr:nth-child(even) td.zy-cbcol { background: #f6f6f6; }
+table.zy-dt tbody tr:hover td { background: #f0f7fc; }
+table.zy-dt .zy-empty { text-align: center; color: #999; padding: 26px 10px; }
+
+.zy-badge-active {
+  display: inline-block; background: #3a87ad; color: #fff; font-size: 11px;
+  font-weight: 700; padding: 2px 7px; border-radius: 3px; white-space: nowrap;
+}
+.zy-badge-off { background: #999; }
+.zy-gear {
+  display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px;
+  background: linear-gradient(#fff, #ececec); border: 1px solid #c8c8c8;
+  border-radius: 3px; color: #444; font-size: 13px; cursor: pointer;
+}
+.zy-gear:hover { background: linear-gradient(#fff, #ddd); }
+
+
+/* ── Re-skin the shared components used by other manager pages ── */
+body.rmsui .card {
+  background: #fff !important; border: 1px solid #ddd !important;
+  border-radius: 4px !important; box-shadow: none !important;
+}
+body.rmsui .card-header {
+  background: linear-gradient(180deg,#fafafa,#ececec); margin: -16px -16px 14px;
+  padding: 12px 14px; border-bottom: 1px solid #ddd;
+}
+body.rmsui .card-title { text-transform: uppercase; font-size: 13.5px; letter-spacing: .3px; color: #333; }
+body.rmsui .btn-primary { background: var(--brand-primary, #64748b) !important; border-color: var(--brand-primary, #64748b) !important; color: #fff !important; }
+body.rmsui .btn-primary:hover { background: var(--brand-hover, #334155) !important; }
+body.rmsui .btn-outline { background: linear-gradient(#fff,#ececec) !important; border: 1px solid #c8c8c8 !important; color: #333 !important; }
+body.rmsui .badge { border-radius: 3px; }
+body.rmsui .table-wrap { border: 1px solid #e5e5e5; border-radius: 4px; }
+body.rmsui .table-wrap th { background: #f7f7f7; color: #222; }
+body.rmsui .page-title { color: #333; }
+body.rmsui .stat-card { background: #fff !important; border: 1px solid #ddd !important; }
+body.rmsui .modal { background: #fff; }
+body.rmsui .modal-header { background: linear-gradient(180deg, var(--zy-blue-top), var(--zy-blue-bot)); color: #fff; }
+body.rmsui .modal-header h3 { color: #fff; }
+body.rmsui .modal-header button { color: #fff; }
+
+/* ── Mobile ───────────────────────────────────────────────────── */
+@media (max-width: 991px) {
+  .zy-side {
+    display: block !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: 275px !important;
+    max-width: 85vw !important;
+    z-index: 1060 !important;
+    background: #ffffff !important;
+    box-shadow: 6px 0 28px rgba(0, 0, 0, 0.45) !important;
+    transform: translateX(-100%) !important;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .zy-side.mobile-open,
+  body.sidebar-open .zy-side {
+    transform: translateX(0) !important;
+  }
+  .zy-main { margin-left: 0 !important; }
+  .zy-side-head {
+    position: relative !important;
+    padding-top: 18px !important;
+  }
+  .zy-side-close {
+    display: flex !important;
+  }
+  .zy-logo svg { height: 38px; }
+  .zy-logo-img { height: 34px; width: 34px; }
+  .zy-header-row {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 8px 12px !important;
+    gap: 8px !important;
+    min-height: 52px !important;
+  }
+  .zy-logo { justify-content: flex-start; }
+  .zy-head-right { justify-content: flex-end; }
+  .zy-hamb { width: 44px; height: 34px; }
+  .zy-user { font-size: 13px; }
+  .zy-body { padding: 12px 10px; }
+  .zy-crumb { font-size: 11px; }
+  .zy-chart-box { height: 315px; }
+  table.zy-dt { font-size: 12px; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Inner pages — same look as the reference manager panel
+   ══════════════════════════════════════════════════════════════ */
+body.rmsui .zy-intro { font-size: 12px; color: #333; line-height: 18px; margin: 0 2px 18px; }
+body.rmsui .zy-loading { padding: 22px; text-align: center; color: #888; }
+body.rmsui .zy-panel-strip { height: 26px; background: #f4f4f4; border-bottom: 1px solid #e4e4e4; }
+
+/* panel header action buttons */
+.zy-head-acts { margin-left: auto; display: flex; align-items: stretch; gap: 0; margin-right: -12px; }
+.zy-head-acts .zy-s2 { align-self: center; margin-right: 10px; }
+.zy-act {
+  width: 30px; border: none; cursor: pointer; color: #fff; font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 0; align-self: stretch; margin: 0; min-height: 32px;
+}
+.zy-act img { width: 15px; height: 15px; object-fit: contain; }
+.zy-act-blue { background: var(--brand-primary, #64748b); } .zy-act-blue:hover { background: var(--brand-hover, #334155); }
+.zy-act-red  { background: #d24842; } .zy-act-red:hover  { background: #bd3a35; }
+.zy-act-teal { background: #2fa8bf; } .zy-act-teal:hover { background: #2793a8; }
+.zy-act-export {
+  margin: 0 -10px 0 auto; padding: 0 15px; align-self: stretch; min-height: 40px;
+  border-radius: 0; border: none; cursor: pointer;
+  background: var(--brand-primary, #64748b); color: #fff; font-size: 12px; font-weight: 400; display: flex;
+  align-items: center; gap: 7px; text-transform: none;
+}
+.zy-act-export img { width: 13px; height: 16px; object-fit: contain; }
+.zy-act-export:hover { background: var(--brand-hover, #334155); }
+.zy-range-pick {
+  width: 157px; padding: 5px 8px; border: 1px solid #ccc; border-radius: 3px;
+  font-size: 14px; color: #555; margin: -6px 0;
+}
+
+/* filter bar under a panel header */
+.zy-filterbar {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px 14px 30px;
+  background: #ececec; border-bottom: 1px solid #ddd;
+}
+.zy-filterbar select, .zy-filterbar input {
+  padding: 6px 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px;
+  color: #555; background: #fff; width: 100%; min-width: 0;
+}
+.zy-filterbar > button { justify-self: start; }
+@media (min-width: 992px) { .zy-filterbar { grid-template-columns: repeat(4, 1fr); padding-bottom: 12px; } }
+.zy-btn-red    { background: #d24842; color: #fff; border: none; border-radius: 3px; padding: 6px 14px; font-size: 13px; cursor: pointer; }
+.zy-btn-blue   { background: var(--brand-primary, #64748b); color: #fff; border: none; border-radius: 3px; padding: 6px 14px; font-size: 13px; cursor: pointer; }
+.zy-btn-orange { background: #f9a228; color: #fff; border: none; border-radius: 3px; padding: 6px 14px; font-size: 13px; cursor: pointer; }
+.zy-btn-grey   { background: #fafafa; color: #333; border: 1px solid #cccccc; border-radius: 3px; padding: 4px 14px; font-size: 13px; cursor: pointer; }
+.zy-btn-red:hover { background: #bd3a35; } .zy-btn-blue:hover { background: var(--brand-hover, #334155); }
+.zy-btn-orange:hover { background: #e8901a; } .zy-btn-grey:hover { background: #efefef; }
+.zy-btn-wide { padding: 12px 34px; }
+.zy-center { text-align: center; padding: 14px 0 4px; }
+
+/* DataTable toolbar */
+.zy-dt2-top { display: flex; flex-wrap: wrap; gap: 14px; justify-content: space-between; align-items: flex-start; }
+.zy-search label { display: block; font-size: 12px; font-weight: 700; color: #333; margin-bottom: 4px; }
+.zy-search input {
+  width: 200px; max-width: 100%; padding: 4px 2px 4px 24px; border-color: #d8d8d8; color: #444; font-size: 12px; border: 1px solid #ccc; border-radius: 4px;
+  background: #fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><circle cx='7' cy='7' r='5' fill='none' stroke='%233a7fbf' stroke-width='2'/><line x1='11' y1='11' x2='15' y2='15' stroke='%233a7fbf' stroke-width='2'/></svg>") 8px 50% no-repeat;
+}
+.zy-show { text-align: right; }
+.zy-show select { padding: 4px 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px;
+  width: 68px; height: 30px; background: #fff; }
+.zy-show-lbl { font-size: 11px; font-weight: 700; color: #333; margin-top: 5px; }
+.zy-exp { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 12px 0 6px; }
+.zy-exp button {
+  background: #f6f6f6; border: 1px solid #cfcfcf; border-radius: 3px;
+  padding: 3px 8px; font-size: 11px; color: #333; cursor: pointer;
+}
+.zy-exp button:hover { background: #eaeaea; }
+.zy-exp .zy-cols { margin-left: auto; padding: 3px 8px; }
+.zy-dt2-foot { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; padding-top: 6px; }
+.zy-info { font-size: 12px; color: #444; }
+.zy-dt2-foot .zy-pager { padding: 6px 0; justify-content: flex-end; }
+table.zy-dt2-table th, table.zy-dt2-table td { white-space: nowrap; }
+table.zy-dt2-table td { vertical-align: top; }
+.zy-cbcol { width: 44px; text-align: center; }
+.zy-cbcol input { width: 18px; height: 18px; }
+.zy-tick { width: 19px; height: 19px; object-fit: contain; vertical-align: -3px; }
+.zy-pen { width: 15px; height: 17px; object-fit: contain; }
+
+table.zy-dt tfoot td { padding: 14px 10px; border: 1px solid #ddd; font-size: 15px; }
+
+/* grey filter box (reports) */
+.zy-filterbox { background: #cfcfcf; border: 1px solid #000; padding: 7px 4px 3px 2px; margin-bottom: 16px; }
+.zy-fb-input {
+  display: block; width: 100%; padding: 6px 8px; margin-bottom: 6px; border: 1px solid #bbb;
+  border-radius: 3px; font-size: 12px; color: #555; background: #fff;
+}
+.zy-groupby { padding: 4px 2px 8px; font-size: 12px; color: #222; display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+.zy-groupby label { display: flex; align-items: center; gap: 4px; }
+.zy-groupby input { width: 18px; height: 18px; }
+.zy-fb-btns { display: flex; gap: 8px; }
+
+/* bulk allocation */
+.zy-lbl { display: block; font-size: 12px; font-weight: 700; color: #222; margin: 10px 0 5px; }
+.zy-note { font-style: italic; color: #444; font-size: 12px; margin-bottom: 6px; }
+.zy-input { width: 100%; padding: 6px 8px; border: 1px solid #c4c4c4; border-radius: 3px; font-size: 12px; color: #444; background: #fff; }
+.zy-input-focus { border: 2px solid #1c1c1c; }
+.zy-input-off { background: #ececec; }
+.zy-input-sm { max-width: 165px; }
+.zy-rangebox { border: 1px solid #c4c4c4; border-top: none; max-height: 210px; overflow-y: auto; background: #fff; }
+.zy-ropt { padding: 8px 10px; font-size: 12px; color: #444; cursor: pointer; }
+.zy-ropt:hover { background: #eef5fb; }
+.zy-ropt.on { background: #659A00; color: #fff; }
+.zy-muted { color: #999; cursor: default; }
+.zy-dl { border: none; border-radius: 3px; color: #fff; width: 35px; height: 23px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
+.zy-dl img { width: 14px; height: 14px; object-fit: contain; }
+.zy-dl-red { background: #d9433f; } .zy-dl-orange { background: #f0a02a; }
+
+/* modal */
+#modal.zy-modal { width: min(560px, 94vw); border-radius: 4px; }
+#modal.zy-modal .modal-header { background: #fff; border-bottom: 1px solid #e4e4e4; padding: 16px; justify-content: center; position: relative; }
+#modal.zy-modal .modal-header h3 { color: #222; font-size: 19px; font-weight: 700; text-align: center; }
+#modal.zy-modal .modal-header button { position: absolute; right: 16px; top: 14px; color: #999; font-size: 18px; }
+#modal.zy-modal .modal-body { padding: 0; }
+.zy-modal-body { padding: 18px 20px 22px; max-height: 62vh; overflow-y: auto; }
+.zy-modal-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 18px; background: #f7f7f7; border-top: 1px solid #e4e4e4; }
+.zy-numlist { border: 1px solid #ddd; background: #fff; padding: 12px; font-size: 15px; color: #444; line-height: 1.7; max-height: 190px; overflow-y: auto; }
+.zy-colslist { display: grid; gap: 10px; font-size: 15px; }
+.zy-confirm { font-size: 16px; color: #333; }
+
+@media (max-width: 991px) {
+  /* the reference panel keeps Search on the left and the record count on the
+     right, with Show/hide columns beside the export buttons — do not stack */
+  .zy-dt2-top { flex-direction: row; flex-wrap: nowrap; gap: 10px; }
+  .zy-search { flex: 1 1 auto; min-width: 0; }
+  .zy-search input { width: 100%; }
+  .zy-show { text-align: right; flex: 0 0 auto; }
+  .zy-exp { flex-wrap: nowrap; gap: 4px; }
+  .zy-exp button { padding: 3px 6px; font-size: 10.5px; }
+  .zy-exp .zy-cols { margin-left: auto; padding: 4px 6px; font-size: 10.5px; white-space: nowrap; }
+  .zy-act { width: 32px; min-height: 30px; }
+  .zy-range-pick { width: 100%; }
+  .zy-dt2-foot { flex-direction: column; align-items: flex-start; }
+}
+
+.zy-act-wide { width: auto; padding: 0 14px; font-size: 12px; text-transform: none; }
+.zy-gap { height: 70px; }
+
+/* ── real glyphs cut from the source panel ─────────────────── */
+.zy-search { position: relative; }
+.zy-search input {
+  background: #fff !important; padding-left: 40px !important;
+}
+.zy-search .zy-mag {
+  position: absolute; left: 11px; bottom: 9px; width: 19px; height: 19px; object-fit: contain;
+}
+.zy-search input { height: 35px; }
+table.zy-dt th .zy-sort-ic { float: right; margin-left: 10px; height: 15px; width: auto; opacity: .95; }
+.zy-ph-plus { margin-left: auto; width: 46px; min-height: 48px; margin-top: -13px; margin-bottom: -13px;
+  background: #f6f6f6; border: none; border-left: 1px solid #d4d4d4; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; }
+.zy-ph-plus img { width: 20px; height: 20px; object-fit: contain; }
+.zy-ph-plus:hover { background: #eaeaea; }
+
+/* ── select2-style range picker (exact copy of the source) ── */
+.zy-s2 { position: relative; width: 147px; max-width: 100%; }
+.zy-s2-box {
+  display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #c9c9c9;
+  border-radius: 3px; padding: 5px 8px; font-size: 12px; color: #999; cursor: pointer;
+}
+.zy-s2-box.picked { color: #333; }
+.zy-s2-box span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.zy-s2-box img { width: 15px; height: 11px; object-fit: contain; opacity: .75; }
+.zy-s2-drop {
+  display: none; position: absolute; left: 0; right: 0; top: calc(100% + 2px); z-index: 120;
+  background: #fff; border: 1px solid #c9c9c9; box-shadow: 0 6px 16px rgba(0,0,0,.18);
+}
+.zy-s2.open .zy-s2-drop { display: block; }
+.zy-s2-search { padding: 6px; border-bottom: 1px solid #e4e4e4; }
+.zy-s2-search input { width: 100%; padding: 5px 8px; border: 1px solid #c9c9c9; border-radius: 2px; font-size: 12px; }
+.zy-s2-list { max-height: 260px; overflow-y: auto; }
+.zy-s2-list div { padding: 8px 10px; font-size: 12px; color: #444; cursor: pointer; }
+.zy-s2-list div:hover, .zy-s2-list div.on { background: #5897fb; color: #fff; }
+.zy-s2-list .zy-s2-none { color: #999; cursor: default; }
+.zy-s2-list .zy-s2-none:hover { background: #fff; color: #999; }
+@media (max-width: 991px) { .zy-s2 { width: 100%; } }
+
+/* ── tables: cells wrap and the table scrolls sideways, like the source ── */
+body.rmsui table.zy-dt2-table { table-layout: auto; width: auto; min-width: 100%; }
+body.rmsui table.zy-dt2-table th,
+body.rmsui table.zy-dt2-table td {
+  white-space: normal; word-break: normal; overflow-wrap: normal;
+  min-width: 62px; vertical-align: top; overflow: hidden;
+}
+/* the table is wider than the phone and scrolls sideways: columns get real room,
+   long numbers stay on one line, wordy cells (Range) wrap — exactly like the source */
+body.rmsui table.zy-dt2-table { min-width: 500px; }
+@media (min-width: 992px) { body.rmsui table.zy-dt2-table { min-width: 100%; } }
+body.rmsui table.zy-dt2-table td { line-height: 1.5; }
+body.rmsui .zy-dt-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* ── modal sits at the bottom on phones, like the source ── */
+#modal-overlay { align-items: flex-end; }
+#modal.zy-modal { width: calc(100% - 20px); max-width: 700px; margin: 0 10px 12px; border-radius: 6px; }
+@media (min-width: 992px) {
+  #modal-overlay { align-items: center; }
+  #modal.zy-modal { margin: 0; }
+}
+#modal.zy-modal .modal-header h3 { font-size: 16px; }
+#modal.zy-modal .modal-header button { font-size: 22px; font-weight: 700; color: #9a9a9a; }
+.zy-modal-body { padding: 20px 22px 24px; }
+.zy-modal-body .zy-lbl { font-size: 13px; margin: 12px 0 6px; }
+.zy-modal-body .zy-lbl:first-child { margin-top: 0; }
+.zy-modal-body .zy-input { padding: 8px 10px; font-size: 12px; color: #666; }
+.zy-modal-foot { padding: 16px 20px; gap: 12px; }
+.zy-modal-foot button { padding: 7px 16px; font-size: 13px; }
+.zy-modal-foot .zy-btn-blue { background: #005fcc; }
+.zy-gear img { width: 30px; height: 14px; object-fit: contain; }
+
+/* checkbox column: shaded + blue sort mark, exactly like the source */
+table.zy-dt th.zy-cbcol { position: relative; }
+table.zy-dt th.zy-cbcol .zy-cbsort { position: absolute; right: 3px; top: 6px; width: 13px; height: auto; }
+
+/* "Today's Top Agents" is a plain table in the source — no column lines */
+table.zy-dt-plain th, table.zy-dt-plain td { border: none; border-bottom: 1px solid #e0e0e0; }
+table.zy-dt-plain tbody tr:hover td { background: transparent; }
+
+/* form controls do NOT inherit font-family by default — force Roboto everywhere */
+body.rmsui input, body.rmsui select, body.rmsui button,
+body.rmsui textarea, body.rmsui optgroup, body.rmsui option,
+body.rmsui table, body.rmsui th, body.rmsui td,
+body.rmsui .zy-modal-body, body.rmsui .zy-modal-foot {
+  font-family: Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+/* the chart card has a slightly darker border in the source */
+.zy-panel.zy-chart-panel { border-color: #bbbbbb; }
+table.zy-dt-plain td { padding: 14px 9px; }
+
+/* the Select Range box sits inside a bold panel header — its own text is normal weight */
+.zy-s2, .zy-s2-box, .zy-s2-list, .zy-s2-search input { font-weight: 400; text-transform: none; letter-spacing: 0; }
+.zy-filterbar select, .zy-filterbar input, .zy-fb-input { font-weight: 400; }
+.zy-exp button, .zy-pager button, .zy-show select, .zy-search input { font-weight: 400; }
+.zy-info { font-size: 12px; font-weight: 400; }
+
+/* ══════════════════════════════════════════════════════════════
+   AGENT panel extras (measured from the agent screenshots)
+   ══════════════════════════════════════════════════════════════ */
+
+/* dashboard stat strips: Today SMS / Last 7 Day SMS / Last 30 Day SMS */
+.zy-strips { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 22px; }
+@media (min-width: 992px) { .zy-strips { grid-template-columns: repeat(3, 1fr); } }
+.zy-strip {
+  display: flex; align-items: center; gap: 14px;
+  background: linear-gradient(180deg, #f2f2f2, #e4e4e4);
+  border: 1px solid #dcdcdc; border-radius: 3px; padding: 12px 14px;
+  box-shadow: 0 0 5px rgba(0,0,0,.05); cursor: default;
+}
+.zy-strip-ic { flex: 0 0 auto; }
+.zy-strip-ic img { width: 47px; height: 44px; object-fit: contain; display: block; background: #fff; border: 1px solid #e4e4e4; }
+.zy-strip-txt { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.zy-strip-txt b { font-size: 12px; color: #444; font-weight: 700; }
+.zy-strip-txt i { font-style: normal; font-size: 12px; color: var(--brand-primary, #64748b); font-weight: 700; }
+.zy-strip-up { color: var(--brand-accent, #38bdf8); font-size: 21px; font-weight: 700; line-height: 1; }
+
+/* dashboard circle stats: NEW ACCOUNTS / NEW NUMBERS / SMS THIS MONTH */
+.zy-circles { display: grid; grid-template-columns: 1fr; gap: 16px; margin: 6px 0 22px; }
+@media (min-width: 992px) { .zy-circles { grid-template-columns: repeat(3, 1fr); } }
+.zy-circle { display: flex; align-items: center; gap: 16px; }
+.zy-circle-ic {
+  width: 58px; height: 58px; border-radius: 50%; border: 1px solid #e0e0e0; background: #fff;
+  display: flex; align-items: center; justify-content: center; flex: 0 0 auto;
+}
+.zy-circle-ic img { width: 35px; height: 35px; object-fit: contain; }
+.zy-circle-txt { display: flex; flex-direction: column; }
+.zy-circle-txt b { font-size: 18px; color: var(--brand-primary, #64748b); font-weight: 700; line-height: 1.2; }
+.zy-circle-txt i { font-style: normal; font-size: 11px; color: #c0490b; letter-spacing: .3px; }
+
+/* payment requests balance bars */
+.zy-balbox { background: linear-gradient(#efefef, #cfcfcf); border: 1px solid #4a4a4a; padding: 10px; margin-bottom: 16px; }
+.zy-bal {
+  border-radius: 4px; padding: 15px 8px; margin-bottom: 9px; text-align: center;
+  font-size: 20px; color: #333; background: #eee;
+}
+.zy-bal:last-child { margin-bottom: 0; }
+.zy-bal-usd { background: #fcba03; }
+.zy-bal-eur { background: #74fc9f; }
+.zy-bal-gbp { background: #e2b1f0; }
+
+/* news date filter bar */
+.zy-datebar { background: #ececec; border-bottom: 1px solid #ddd; padding: 12px 14px 18px; }
+.zy-daterow { display: flex; margin-bottom: 8px; max-width: 330px; }
+.zy-daterow input {
+  flex: 1; padding: 6px 8px; border: 1px solid #ccc; border-right: none;
+  border-radius: 3px 0 0 3px; font-size: 12px; color: #555; background: #fff;
+}
+.zy-cal {
+  width: 39px; border: 1px solid #ccc; background: #f0f0f0; border-radius: 0 3px 3px 0;
+  cursor: pointer; color: #555; font-size: 12px;
+}
+
+/* agent menu: sub-items sit in a white rounded panel */
+.zy-msub-white {
+  background: #fafafa; border-radius: 8px; margin: 6px 0 10px; padding: 6px 0; overflow: hidden;
+}
+.zy-msub-white div { color: #333; padding: 9px 14px; font-size: 12px; }
+.zy-msub-white div::before { content: none; }
+.zy-msub-white div:hover, .zy-msub-white div.on { background: linear-gradient(#1e90d6, #0079c2); color: #fff; }
+
+/* "NA" cells in the agent ratecard / ranges grid */
+.zy-na { color: #d0a02a; font-weight: 400; }
+
+/* bullet list under the voice test panel intro */
+.zy-list { margin: 0 0 14px 20px; font-size: 12px; color: #333; line-height: 18px; }
+.zy-list li { margin-bottom: 6px; }
+
+/* ── client panel: header has no logo row, and its profile menu is plain ── */
+.zy-header-slim .zy-header-row { min-height: 48px; padding: 8px 14px; }
+@media (max-width: 991px) {
+  .zy-header-slim .zy-header-row { flex-direction: row; justify-content: flex-end; padding: 8px 14px; }
+}
+.zy-user-menu a.zy-um-logout { border-top: 1px solid #e0e0e0; font-weight: 700; }
+
+/* ══════════════════════════════════════════════════════════════
+   ADMIN panel: map its own components onto the reference panel's
+   look, so its 70 pages match the manager/agent/client style.
+   (The admin keeps its own features — this is styling only.)
+   ══════════════════════════════════════════════════════════════ */
+
+/* page header → same rhythm as the other panels' intro line */
+body.rmsui .page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 10px; margin: 0 0 12px;
+}
+body.rmsui .page-title { font-size: 14px; font-weight: 700; color: #333; letter-spacing: 0; }
+body.rmsui .page-subtitle { font-size: 12px; color: #666; line-height: 18px; }
+body.rmsui .page-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* cards → .widget-block: grey gradient head, white body, 1px #c2c2c2, radius 3 */
+body.rmsui .card {
+  background: #fff !important; border: 1px solid #c2c2c2 !important; border-radius: 3px !important;
+  margin-bottom: 20px !important; padding: 10px !important;
+  box-shadow: inset 0 0 5px #ddd !important;
+}
+body.rmsui .card-header {
+  background: linear-gradient(180deg, #f1f1f1, #dbdbdb) !important;
+  margin: -10px -10px 10px !important; padding: 0 10px !important; height: 40px !important;
+  display: flex !important; align-items: center !important; gap: 8px !important;
+  border-bottom: 1px solid #c2c2c2 !important; border-radius: 3px 3px 0 0 !important;
+}
+body.rmsui .card-title {
+  font-size: 12px !important; font-weight: 700 !important; color: #333 !important;
+  text-transform: uppercase !important; letter-spacing: 0 !important;
+}
+
+/* buttons → .btn { padding:4px 10px; font-size:13px } */
+body.rmsui .btn {
+  padding: 4px 10px !important; font-size: 13px !important; border-radius: 3px !important;
+  line-height: 18px !important; font-weight: 400 !important;
+}
+body.rmsui .btn-sm { padding: 3px 8px !important; font-size: 12px !important; }
+body.rmsui .btn-primary { background: var(--brand-primary, #64748b) !important; border-color: var(--brand-primary, #64748b) !important; color: #fff !important; }
+body.rmsui .btn-primary:hover { background: var(--brand-hover, #334155) !important; }
+body.rmsui .btn-danger  { background: #d24842 !important; border-color: #d24842 !important; color: #fff !important; }
+body.rmsui .btn-outline {
+  background: #fafafa !important; border: 1px solid #ccc !important; color: #333 !important;
+}
+body.rmsui .btn-outline:hover { background: #efefef !important; }
+
+/* tables → same grid lines and 12px text as the other panels */
+body.rmsui .table-wrap { border: 1px solid #c2c2c2; border-radius: 3px; overflow-x: auto; }
+body.rmsui .table-wrap table { width: 100%; border-collapse: collapse; font-size: 12px; }
+body.rmsui .table-wrap th {
+  background: linear-gradient(180deg, #f1f1f1, #dbdbdb) !important; color: #333 !important;
+  font-size: 12px !important; font-weight: 700 !important; text-align: left;
+  padding: 8px !important; border: 1px solid #ddd !important; white-space: nowrap;
+}
+body.rmsui .table-wrap td {
+  padding: 8px !important; border: 1px solid #ddd !important; color: #333 !important;
+  font-size: 12px !important; line-height: 18px !important;
+}
+body.rmsui .table-wrap tr:hover td { background: #f0f7fc !important; }
+
+/* stat cards → same tile feel as the dashboards */
+body.rmsui .stats-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 18px; }
+@media (min-width: 768px)  { body.rmsui .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1200px) { body.rmsui .stats-grid { grid-template-columns: repeat(4, 1fr); } }
+body.rmsui .stat-card {
+  background: linear-gradient(180deg, #fefefe 0%, #f6f6f6 55%, #ebebeb 100%) !important;
+  border: 1px solid #dcdcdc !important; border-radius: 3px !important; padding: 12px !important;
+  box-shadow: 0 0 5px rgba(0,0,0,.07) !important;
+}
+body.rmsui .stat-value { font-size: 18px !important; font-weight: 700 !important; color: var(--brand-primary, #64748b) !important; }
+body.rmsui .stat-label { font-size: 11px !important; color: #c0490b !important; text-transform: uppercase; }
+body.rmsui .stat-icon { width: 34px !important; height: 34px !important; font-size: 15px !important; border-radius: 3px !important; }
+
+/* forms */
+body.rmsui .form-label { font-size: 12px !important; font-weight: 700 !important; color: #222 !important; margin-bottom: 5px !important; }
+body.rmsui .form-group { margin-bottom: 10px !important; }
+body.rmsui input[type=text], body.rmsui input[type=number], body.rmsui input[type=date],
+body.rmsui input[type=password], body.rmsui input[type=search], body.rmsui input[type=email],
+body.rmsui select, body.rmsui textarea {
+  padding: 6px 8px !important; font-size: 12px !important; border: 1px solid #c4c4c4 !important;
+  border-radius: 3px !important; color: #444 !important; background: #fff !important;
+}
+body.rmsui .filters-bar { background: #cfcfcf; border: 1px solid #000; padding: 7px 4px 3px 2px; margin-bottom: 12px; }
+body.rmsui .filters-bar label { font-size: 12px; color: #333; }
+
+/* misc */
+body.rmsui .badge { font-size: 11px !important; padding: 2px 7px !important; border-radius: 3px !important; font-weight: 700 !important; }
+body.rmsui .badge.badge-black, .badge.badge-black { background: #000000 !important; color: #ffffff !important; border: 1px solid #000000 !important; }
+body.rmsui .badge.badge-black i, .badge.badge-black i { color: #ffffff !important; }
+body.rmsui .empty-state { font-size: 12px !important; color: #999 !important; padding: 22px 10px !important; text-align: center; }
+body.rmsui .text-muted { color: #777 !important; }
+body.rmsui .fs-12 { font-size: 12px !important; }
+body.rmsui .two-col { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 992px) { body.rmsui .two-col { grid-template-columns: 1fr 1fr; } }
+body.rmsui .chart-container { background: #fff; border: 1px solid #c2c2c2; border-radius: 3px; padding: 10px; }
+body.rmsui .monospace { font-family: Menlo, Consolas, monospace; font-size: 11px; }
+.zy-alert { background: #d24842; color: #fff; padding: 10px 12px; border-radius: 3px; margin-bottom: 16px; font-size: 12px; }
+.zy-alert small { opacity: .9; }
+
+/* Success flash — "Well Done! Agent Added." (reference panel's alert-success) */
+.zy-flash { position: relative; background: #f8fafc; border: 1px solid #cbd5e1; color: #1e293b;
+  border-radius: 4px; padding: 8px 35px 8px 14px; margin: 0 0 18px; font-size: 12px;
+  line-height: 18px; text-shadow: none; }
+.zy-flash b { font-weight: bold; }
+.zy-flash-x { position: absolute; top: 6px; right: 12px; color: #000; opacity: .2;
+  font-size: 20px; font-weight: bold; line-height: 18px; text-decoration: none; cursor: pointer; }
+.zy-flash-x:hover { opacity: .4; text-decoration: none; }
+
+/* Per-row action buttons (Agents / Clients / Ranges / Credit Notes).
+   The button images are cropped from the reference panel, so they are
+   rendered at their own size with no extra chrome. */
+.zy-rowbtn { display: block; padding: 0; margin: 0 0 1px; border: 0; background: none;
+  line-height: 0; cursor: pointer; }
+.zy-rowbtn img { display: block; width: 35px; height: 25px; }
+.zy-rowbtn + .zy-rowbtn { margin-top: 0; }
+
+/* Blue/Themed "Gen Token" button in the Agents table */
+.zy-gentoken { display: inline-block; padding: 4px 10px; font-size: 13px; font-weight: bold;
+  color: #fff; border: 1px solid var(--brand-primary, #0a56b8); border-radius: 3px; cursor: pointer;
+  background: var(--header-gradient, var(--brand-primary, #2563eb)); }
+.zy-gentoken:hover { background: var(--brand-hover, #1d4ed8); }
+
+/* Limits & Memo / details popup */
+.zy-memo-h { font-size: 15px; font-weight: bold; color: #333; margin: 4px 0 6px; }
+.zy-memo-k { font-size: 12px; font-weight: bold; color: #333; margin: 8px 0 2px; }
+.zy-memo-v { font-size: 12px; color: #444; min-height: 14px; word-break: break-word; }
+.zy-memo-t { width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 12px; }
+.zy-memo-t th { text-align: left; font-weight: bold; padding: 3px 0; }
+.zy-memo-t td { padding: 3px 0; }
+.zy-token { font-family: monospace; word-break: break-all; }
+.zy-area { min-height: 58px; resize: vertical; }
+
+/* ── TEST PANEL — no sidebar and no logo in the header ─────────── */
+.tpui .zy-main { margin-left: 0; }
+.zy-header-nologo { justify-content: flex-end; }
+.tpui .zy-tile-on span { color: var(--brand-primary, #64748b); }

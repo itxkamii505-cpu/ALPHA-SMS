@@ -1,0 +1,15 @@
+[
+  {
+    "id": 1,
+    "country": "Peru",
+    "provider": "Manual",
+    "prefix": "519",
+    "range_name": "Peru_KB1",
+    "cost": 0.013,
+    "payout_schedule": "weekly",
+    "payout": 0.011,
+    "otp_limit": 10,
+    "active": true,
+    "created": "2026-09-26T15:23:47.511Z"
+  }
+]

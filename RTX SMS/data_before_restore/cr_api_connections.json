@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "panel_name": "ASTRA",
+    "panel_url": "https://astrasms.com/api/viewstats",
+    "token": "e1f4d7cb0a2a0b332d51ad68f87c9421b3fff3c58192abba497ebe8a592fb059",
+    "interval": 5,
+    "active": true,
+    "last_pulled_at": "2026-09-27T16:49:38.958Z",
+    "last_status": "Active — Up to date",
+    "total_pulled": 4655,
+    "created": "2026-09-23T08:12:24.075Z"
+  }
+]
