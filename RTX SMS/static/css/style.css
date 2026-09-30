@@ -431,8 +431,8 @@ tbody tr:nth-child(even) { background:rgba(255,255,255,0.02); }
 
 /* ── Modal ──────────────────────────────────────────────────────── */
 .modal-overlay {
-  position:fixed;inset:0;background:rgba(0,0,0,0.65);
-  z-index:200;display:none;align-items:center;justify-content:center;padding:20px;
+  position:fixed;inset:0;background:rgba(0,0,0,0.75);
+  z-index:99999 !important;display:none;align-items:center;justify-content:center;padding:20px;
 }
 .modal-overlay.show { display:flex; }
 .modal {

@@ -121,7 +121,11 @@ function openModal(title, html) {
   const bodyEl = document.getElementById('modal-body');
   if (!overlay || !titleEl || !bodyEl) return;
 
-  titleEl.textContent = title;
+  if (typeof title === 'string' && title.includes('<')) {
+    titleEl.innerHTML = title;
+  } else {
+    titleEl.textContent = title;
+  }
   bodyEl.innerHTML = html;
   overlay.classList.add('show');
 }
@@ -7974,17 +7978,7 @@ function openLogoCropModal(imageUrl, filename = 'Brand Logo') {
 
   const siteName = document.getElementById('s-site-name')?.value || 'ALPHA SMS';
   
-  const title = `
-    <div style="display:flex;align-items:center;gap:10px;">
-      <div style="width:32px;height:32px;border-radius:8px;background:var(--brand-primary,#0284c7);display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;">
-        <i class="fas fa-crop-alt"></i>
-      </div>
-      <div>
-        <div style="font-size:15px;font-weight:700;color:var(--text-primary,#fff);letter-spacing:0.2px;">Crop & Frame Logo</div>
-        <div style="font-size:11px;color:var(--text-secondary,#94a3b8);">${filename}</div>
-      </div>
-    </div>
-  `;
+  const title = 'Crop & Frame Logo';
 
   const html = `
     <div class="studio-cropper-wrap">
@@ -8320,8 +8314,8 @@ async function applyCroppedLogo() {
 
   try {
     let canvas = window._logoCropper.getCroppedCanvas({
-      maxWidth: 1000,
-      maxHeight: 1000,
+      maxWidth: 480,
+      maxHeight: 480,
       imageSmoothingEnabled: true,
       imageSmoothingQuality: 'high'
     });
@@ -8358,14 +8352,15 @@ async function applyOriginalLogo() {
   if (!_pendingLogoOriginal) return;
   toast('Uploading original logo...', 'info');
   try {
-    await uploadLogoData(_pendingLogoOriginal);
+    const optimized = await optimizeBase64Image(_pendingLogoOriginal, 480);
+    await uploadLogoData(optimized);
     closeModal();
   } catch(err) {
     toast('Failed to upload logo: ' + err.message, 'error');
   }
 }
 
-async function optimizeBase64Image(dataUrl, maxDim = 800) {
+async function optimizeBase64Image(dataUrl, maxDim = 480) {
   return new Promise((resolve) => {
     if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image')) {
       return resolve(dataUrl);
@@ -8373,10 +8368,7 @@ async function optimizeBase64Image(dataUrl, maxDim = 800) {
     const img = new Image();
     img.onload = () => {
       let { width, height } = img;
-      if (width <= maxDim && height <= maxDim) {
-        return resolve(dataUrl);
-      }
-      const scale = Math.min(maxDim / width, maxDim / height);
+      const scale = Math.min(maxDim / Math.max(width, 1), maxDim / Math.max(height, 1), 1);
       width = Math.max(1, Math.round(width * scale));
       height = Math.max(1, Math.round(height * scale));
       const cvs = document.createElement('canvas');
@@ -8384,7 +8376,7 @@ async function optimizeBase64Image(dataUrl, maxDim = 800) {
       cvs.height = height;
       const ctx = cvs.getContext('2d');
       ctx.drawImage(img, 0, 0, width, height);
-      resolve(cvs.toDataURL('image/png', 0.92));
+      resolve(cvs.toDataURL('image/png'));
     };
     img.onerror = () => resolve(dataUrl);
     img.src = dataUrl;
@@ -8397,7 +8389,7 @@ async function uploadLogoData(base64Data) {
   if (previewImg) previewImg.src = base64Data;
   if (prevLogo) prevLogo.src = base64Data;
 
-  const optimizedData = await optimizeBase64Image(base64Data, 800);
+  const optimizedData = await optimizeBase64Image(base64Data, 480);
 
   const res = await apiFetch('/api/settings/upload-logo', {
     method: 'POST',
