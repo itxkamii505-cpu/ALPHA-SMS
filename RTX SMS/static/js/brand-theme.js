@@ -213,7 +213,7 @@
     } catch (e) {}
 
     const siteName = _currentSettings.site_name || 'ALPHA SMS';
-    const logoUrl = _currentSettings.logo_url || '/static/img/custom-logo.png';
+    const logoUrl = _currentSettings.logo_url || '/static/img/alphasms-logo.svg';
     const themeColor = _currentSettings.theme_color || 'dark';
     const fontKey = _currentSettings.font_family || 'system';
     const palette = THEME_PALETTES[themeColor] || THEME_PALETTES.dark || THEME_PALETTES.blue;
@@ -226,8 +226,12 @@
 
     // 1. Update Document Title
     const curTitle = document.title || '';
-    if (curTitle.includes('𝑴𝑨𝑰𝑻 𝑺𝑴𝑺') || curTitle.includes('MAIT SMS') || curTitle.includes('RTX SMS') || curTitle.includes('ALPHA SMS')) {
-      document.title = curTitle.replace(/𝑴𝑨𝑰𝑻 𝑺𝑴𝑺|MAIT SMS|RTX SMS|ALPHA SMS/g, siteName);
+    if (curTitle.includes('—') || curTitle.includes('|')) {
+      const sep = curTitle.includes('—') ? ' — ' : ' | ';
+      const parts = curTitle.split(sep);
+      document.title = parts[0].trim() + sep + siteName;
+    } else if (curTitle.includes('𝑴𝑨𝑰𝑻 𝑺𝑴𝑺') || curTitle.includes('MAIT SMS') || curTitle.includes('RTX SMS') || curTitle.includes('ALPHA SMS')) {
+      document.title = curTitle.replace(/𝑴𝑨𝑰𝑻 𝑺𝑴𝑺|MAIT SMS|RTX SMS|ALPHA SMS|Astra SMS|ASTRA SMS/g, siteName);
     } else if (!curTitle) {
       document.title = siteName;
     }
@@ -724,7 +728,9 @@
         zyOpenSidebar();
       }
     } else {
-      document.body.classList.toggle('sidebar-collapsed');
+      // PC version: Sidebar stays fixed, solid and visible; dashboard never slides
+      document.body.classList.remove('sidebar-collapsed');
+      return;
     }
   }
 

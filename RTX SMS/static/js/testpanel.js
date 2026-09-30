@@ -10,20 +10,24 @@ let isLivePaused = false;
 
 // ── Auth ──────────────────────────────────────────────────────────
 (function() {
-  const tp = sessionStorage.getItem('tp_logged_in') === '1';
-  const adm = sessionStorage.getItem('admin_logged_in') === '1';
-  if (!tp && !adm) {
-    try {
-      if (window.top && window.top !== window) {
-        window.top.location.href = '/login';
-        return;
-      }
-    } catch (e) {}
-    window.location.href = '/login';
-    return;
+  if (window.SpeedAuth) {
+    if (!window.SpeedAuth.enforce(['TestPanel'])) return;
+  } else {
+    const tp = sessionStorage.getItem('tp_logged_in') === '1';
+    const adm = sessionStorage.getItem('admin_logged_in') === '1';
+    if (!tp && !adm) {
+      try {
+        if (window.top && window.top !== window) {
+          window.top.location.href = '/login';
+          return;
+        }
+      } catch (e) {}
+      window.location.href = '/login';
+      return;
+    }
   }
   try {
-    PUSER = JSON.parse(sessionStorage.getItem('tp_user') || sessionStorage.getItem('admin_user') || '{}');
+    PUSER = JSON.parse(sessionStorage.getItem('tp_user') || sessionStorage.getItem('admin_user') || localStorage.getItem('admin_user') || '{}');
   } catch (err) {
     PUSER = {};
   }
@@ -34,8 +38,12 @@ let isLivePaused = false;
 })();
 
 function doLogout() {
+  if (window.SpeedAuth) {
+    window.SpeedAuth.clearSession();
+    return;
+  }
   try {
-    ['tp_logged_in', 'tp_user', 'admin_logged_in', 'admin_user', 'tp_current_page', 'admin_current_page'].forEach(k => {
+    ['tp_logged_in', 'tp_user', 'admin_logged_in', 'admin_user', 'active_session_active', 'active_session_role', 'tp_current_page', 'admin_current_page'].forEach(k => {
       sessionStorage.removeItem(k);
       localStorage.removeItem(k);
     });

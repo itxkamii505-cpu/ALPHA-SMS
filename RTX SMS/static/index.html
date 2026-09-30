@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Owner Panel — ALPHA SMS</title>
-<link rel="icon" type="image/jpeg" href="/static/img/mait-sms-logo.png">
+<link rel="icon" type="image/svg+xml" href="/static/img/alphasms-logo.svg">
 <script>
 (function(){
   try {
@@ -25,6 +25,13 @@
 })();
 </script>
 <script src="/static/js/brand-theme.js"></script>
+<script src="/static/js/speed-auth-guard.js"></script>
+<script>
+  if (window.SpeedAuth) {
+    window.SpeedAuth.enforce(['Owner', 'Admin']);
+    window.SpeedAuth.initCrossTabWatcher(['Owner', 'Admin']);
+  }
+</script>
 <link rel="stylesheet" href="/static/css/style.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -39,7 +46,7 @@
 <aside class="zy-side" id="sidebar">
   <div class="zy-side-head">
     <button class="zy-side-close" onclick="zyCloseSidebar()" aria-label="Close" type="button"><i class="fas fa-times"></i></button>
-    <div class="zy-avatar-lg"><img id="zy-side-logo" src="/static/img/mait-sms-logo.png" alt="ALPHA SMS"></div>
+    <div class="zy-avatar-lg"><img id="zy-side-logo" src="/static/img/alphasms-logo.svg" onerror="this.onerror=null;this.src='/static/img/custom-logo.svg';" alt="ALPHA SMS"></div>
     <div class="zy-welcome">Welcome <span id="mgr-username-side">Kamran_Bhatti</span></div>
     <div class="zy-role" id="brand-role">Owner Panel</div>
     <div class="zy-clock" id="zy-clock">&mdash;</div>

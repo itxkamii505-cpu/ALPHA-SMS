@@ -9,27 +9,26 @@ let CLIENT_USER = {};
 // ── Auth guard ────────────────────────────────────────────────────
 (function init() {
   try {
-    if (sessionStorage.getItem('admin_logged_in') !== '1') {
-      try {
-        if (window.top && window.top !== window) {
-          window.top.location.href = '/login';
-          return;
-        }
-      } catch (e) {}
-      window.location.href = '/login';
-      return;
+    if (window.SpeedAuth) {
+      if (!window.SpeedAuth.enforce(['Client', 'Reseller'])) return;
+    } else {
+      if (sessionStorage.getItem('admin_logged_in') !== '1') {
+        try {
+          if (window.top && window.top !== window) {
+            window.top.location.href = '/login';
+            return;
+          }
+        } catch (e) {}
+        window.location.href = '/login';
+        return;
+      }
+      const checkU = JSON.parse(sessionStorage.getItem('admin_user') || '{}');
+      if (!['Client', 'Reseller'].includes(checkU.role)) {
+        window.location.href = '/login';
+        return;
+      }
     }
-    CLIENT_USER = JSON.parse(sessionStorage.getItem('admin_user') || '{}');
-    if (!['Client', 'Reseller'].includes(CLIENT_USER.role)) {
-      try {
-        if (window.top && window.top !== window) {
-          window.top.location.href = '/dashboard';
-          return;
-        }
-      } catch (e) {}
-      window.location.href = '/dashboard';
-      return;
-    }
+    CLIENT_USER = JSON.parse(sessionStorage.getItem('admin_user') || localStorage.getItem('admin_user') || '{}');
     CLIENT_ID = CLIENT_USER.id;
 
     const uEl = document.getElementById('client-username');
@@ -270,11 +269,11 @@ function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const wrapper = document.querySelector('.main-wrapper');
   if (!sidebar) return;
-  if (window.innerWidth <= 900) {
+  if (window.innerWidth < 992) {
     sidebar.classList.toggle('open');
   } else {
-    sidebar.classList.toggle('collapsed');
-    if (wrapper) wrapper.classList.toggle('sidebar-collapsed');
+    sidebar.classList.remove('collapsed');
+    if (wrapper) wrapper.classList.remove('sidebar-collapsed');
   }
 }
 
@@ -293,8 +292,12 @@ function toggleGroup(id) {
 
 // ── Logout ────────────────────────────────────────────────────────
 function doLogout() {
+  if (window.SpeedAuth) {
+    window.SpeedAuth.clearSession();
+    return;
+  }
   try {
-    ['admin_logged_in', 'admin_user', 'admin_current_page', 'manager_current_page', 'agent_current_page', 'client_current_page', 'tp_logged_in', 'tp_user', 'tp_current_page'].forEach(k => {
+    ['admin_logged_in', 'admin_user', 'active_session_active', 'active_session_role', 'admin_current_page', 'manager_current_page', 'agent_current_page', 'client_current_page', 'tp_logged_in', 'tp_user', 'tp_current_page'].forEach(k => {
       sessionStorage.removeItem(k);
       localStorage.removeItem(k);
     });

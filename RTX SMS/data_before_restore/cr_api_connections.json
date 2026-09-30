@@ -1,8 +1,8 @@
 [
   {
     "id": 1,
-    "panel_name": "ASTRA",
-    "panel_url": "https://astrasms.com/api/viewstats",
+    "panel_name": "ALPHA",
+    "panel_url": "https://alphasms.com/api/viewstats",
     "token": "e1f4d7cb0a2a0b332d51ad68f87c9421b3fff3c58192abba497ebe8a592fb059",
     "interval": 5,
     "active": true,

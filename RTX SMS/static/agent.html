@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Agent Panel — ALPHA SMS</title>
-<link rel="icon" type="image/jpeg" href="/static/img/mait-sms-logo.png">
+<link rel="icon" type="image/svg+xml" href="/static/img/alphasms-logo.svg">
 <script>
 (function(){
   try {
@@ -25,6 +25,13 @@
 })();
 </script>
 <script src="/static/js/brand-theme.js"></script>
+<script src="/static/js/speed-auth-guard.js"></script>
+<script>
+  if (window.SpeedAuth) {
+    window.SpeedAuth.enforce(['Agent']);
+    window.SpeedAuth.initCrossTabWatcher(['Agent']);
+  }
+</script>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -37,7 +44,7 @@
 <aside class="zy-side" id="sidebar">
   <div class="zy-side-head">
     <button class="zy-side-close" onclick="zyCloseSidebar()" aria-label="Close" type="button"><i class="fas fa-times"></i></button>
-    <div class="zy-avatar-lg"><img id="zy-side-logo" src="/static/img/mait-sms-logo.png" alt="ALPHA SMS"></div>
+    <div class="zy-avatar-lg"><img id="zy-side-logo" src="/static/img/alphasms-logo.svg" onerror="this.onerror=null;this.src='/static/img/custom-logo.svg';" alt="ALPHA SMS"></div>
     <div class="zy-welcome">Welcome <span id="mgr-username-side">Agent</span></div>
     <div class="zy-role" id="agent-name-sub">Agent Panel</div>
     <div class="zy-clock" id="zy-clock">—</div>

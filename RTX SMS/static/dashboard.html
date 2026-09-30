@@ -6,7 +6,7 @@
      viewport, so the 540px layout width has to be declared HERE -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard — ALPHA SMS</title>
-<link rel="icon" type="image/jpeg" href="/static/img/mait-sms-logo.png">
+<link rel="icon" type="image/svg+xml" href="/static/img/alphasms-logo.svg">
 <style>
   html, body { margin:0; padding:0; height:100%; background:#0f1115; }
   #panel-frame { position:fixed; inset:0; width:100%; height:100%; border:0; }
@@ -21,23 +21,20 @@
 <div id="boot-msg"></div>
 <iframe id="panel-frame" title="Dashboard" style="display:none;"></iframe>
 
+<script src="/static/js/speed-auth-guard.js"></script>
 <script>
 (function () {
-  // Single entry point for every role. Login always sends the user here;
-  // this file decides — based on the logged-in role — which panel to load
-  // into the frame, so the URL always stays "/dashboard".
-  const ROLE_ROUTES = {
-    'Admin':    '/ints/admin/SMSDashboard',
-    'Manager':  '/ints/manager/SMSDashboard',
-    'Agent':    '/ints/agent/SMSDashboard',
-    'Client':   '/ints/client/SMSDashboard',
-    'Reseller': '/ints/client/SMSDashboard'   // Reseller shares the Client panel UI
-  };
-  // Note: these are dedicated /panel/* routes (not "/", "/manager", "/agent")
-  // so that visiting the old URLs directly still works too, and so the
-  // frame's internal navigation never collides with the top-level app routes.
-
   function boot() {
+    if (window.SpeedAuth) {
+      if (!window.SpeedAuth.isLoggedIn()) {
+        window.location.replace('/login');
+        return;
+      }
+      const role = window.SpeedAuth.getActiveRole();
+      window.location.replace(window.SpeedAuth.getRoleRedirect(role));
+      return;
+    }
+
     if (sessionStorage.getItem('admin_logged_in') !== '1') {
       window.location.href = '/login';
       return;
@@ -45,26 +42,24 @@
     let user = {};
     try { user = JSON.parse(sessionStorage.getItem('admin_user') || '{}'); } catch (e) {}
 
-    // Test Panel is a fully standalone app (its own topbar/sidebar/everything)
-    // — it must never be embedded inside this iframe shell, always a real
-    // top-level page.
-    if (user.role === 'TestPanel') {
+    const role = (user.role || '').toLowerCase();
+    if (role === 'testpanel') {
       window.location.href = '/testpanel';
       return;
     }
-
-    const route = ROLE_ROUTES[user.role];
-    if (!route) {
-      // Unknown / missing role — force back to login rather than guessing.
-      sessionStorage.removeItem('admin_logged_in');
-      sessionStorage.removeItem('admin_user');
-      window.location.href = '/login';
+    if (role === 'manager') {
+      window.location.replace('/ints/manager/SMSDashboard');
       return;
     }
-
-    // Go to the panel as a REAL page (no iframe) so its own viewport applies
-    // and the address bar shows /ints/<role>/<Page>.
-    window.location.replace(route);
+    if (role === 'agent') {
+      window.location.replace('/ints/agent/SMSDashboard');
+      return;
+    }
+    if (role === 'client' || role === 'reseller') {
+      window.location.replace('/ints/client/SMSDashboard');
+      return;
+    }
+    window.location.replace('/owner');
   }
 
   boot();

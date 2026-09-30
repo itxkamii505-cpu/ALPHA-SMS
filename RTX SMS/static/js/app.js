@@ -7,29 +7,28 @@ const API = '';  // same origin
 // ── Auth guard ────────────────────────────────────────────────────
 (function initUser() {
   try {
-    if (sessionStorage.getItem('admin_logged_in') !== '1') {
-      try {
-        if (window.top && window.top !== window) {
-          window.top.location.href = '/login';
-          return;
-        }
-      } catch (e) {}
-      window.location.href = '/login';
-      return;
+    if (window.SpeedAuth) {
+      if (!window.SpeedAuth.enforce(['Owner', 'Admin'])) return;
+    } else {
+      if (sessionStorage.getItem('admin_logged_in') !== '1') {
+        try {
+          if (window.top && window.top !== window) {
+            window.top.location.href = '/login';
+            return;
+          }
+        } catch (e) {}
+        window.location.href = '/login';
+        return;
+      }
+      const checkU = JSON.parse(sessionStorage.getItem('admin_user') || '{}');
+      if (!['Admin', 'Owner'].includes(checkU.role)) {
+        sessionStorage.removeItem('admin_logged_in');
+        sessionStorage.removeItem('admin_user');
+        window.location.href = '/login';
+        return;
+      }
     }
-    const u = JSON.parse(sessionStorage.getItem('admin_user') || '{}');
-    if (!['Admin', 'Owner'].includes(u.role)) {
-      sessionStorage.removeItem('admin_logged_in');
-      sessionStorage.removeItem('admin_user');
-      try {
-        if (window.top && window.top !== window) {
-          window.top.location.href = '/login';
-          return;
-        }
-      } catch (e) {}
-      window.location.href = '/login';
-      return;
-    }
+    const u = JSON.parse(sessionStorage.getItem('admin_user') || localStorage.getItem('admin_user') || '{}');
     const el = document.getElementById('topbar-user');
     const roleSub = document.getElementById('brand-role');
     if (roleSub) roleSub.textContent = (u.role === 'Admin' || u.role === 'Owner') ? 'Owner Panel' : ((u.role || 'User') + ' Account');
@@ -376,13 +375,13 @@ function toggleTheme() {
 function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const wrapper = document.querySelector('.main-wrapper');
-  if (window.innerWidth <= 900) {
+  if (window.innerWidth < 992) {
     // Mobile: slide-in overlay behavior
-    sidebar.classList.toggle('open');
+    if (sidebar) sidebar.classList.toggle('open');
   } else {
-    // Desktop: collapse/expand, shifting the content over
-    sidebar.classList.toggle('collapsed');
-    if (wrapper) wrapper.classList.toggle('sidebar-collapsed');
+    // Desktop: Fixed and solid permanent sidebar; dashboard never slides
+    if (sidebar) sidebar.classList.remove('collapsed');
+    if (wrapper) wrapper.classList.remove('sidebar-collapsed');
   }
 }
 
@@ -401,8 +400,12 @@ function toggleGroup(id) {
 
 // ── Logout ────────────────────────────────────────────────────────
 function doLogout() {
+  if (window.SpeedAuth) {
+    window.SpeedAuth.clearSession();
+    return;
+  }
   try {
-    ['admin_logged_in', 'admin_user', 'admin_current_page', 'manager_current_page', 'agent_current_page', 'client_current_page', 'tp_logged_in', 'tp_user', 'tp_current_page'].forEach(k => {
+    ['admin_logged_in', 'admin_user', 'active_session_active', 'active_session_role', 'admin_current_page', 'manager_current_page', 'agent_current_page', 'client_current_page', 'tp_logged_in', 'tp_user', 'tp_current_page'].forEach(k => {
       sessionStorage.removeItem(k);
       localStorage.removeItem(k);
     });
@@ -828,11 +831,11 @@ function openAddCrApiModal() {
       <p class="fs-12 text-muted" style="margin-bottom:14px;">Connect external panel's CR API — incoming OTPs are auto-pulled into your panel every 5 seconds so they appear at the same time.</p>
       <div class="form-group">
         <label class="form-label">Panel Name *</label>
-        <input id="cr-panel-name" placeholder="e.g. ASTRA / Hadi's Panel" required>
+        <input id="cr-panel-name" placeholder="e.g. ALPHA / Remote Panel" required>
       </div>
       <div class="form-group">
         <label class="form-label">Panel URL (CR API URL) *</label>
-        <input id="cr-panel-url" placeholder="https://astrasms.com/api/viewstats" required>
+        <input id="cr-panel-url" placeholder="https://alphasms.com/api/viewstats" required>
       </div>
       <div class="form-group">
         <label class="form-label">Token *</label>
@@ -1726,17 +1729,17 @@ async function renderMyNumbers(page = 1, search = '', status = '') {
             ${zySelectSearch('admin-bulk-manager', 'Search managers…')}
             <select id="admin-bulk-manager" style="display:block;">
               <option value="">— Select Manager —</option>
-              ${managers.filter(m => m.status === 'active').map(m => `<option value="${m.id}">${m.username}</option>`).join('')}
+              ${managers.filter(m => m && m.status !== 'inactive' && m.status !== 'suspended' && m.status !== 'blocked').map(m => `<option value="${m.id}">${m.username}</option>`).join('')}
             </select>
             ${zySelectSearch('admin-bulk-agent', 'Search agents…')}
             <select id="admin-bulk-agent" style="display:none;">
               <option value="">— Select Agent —</option>
-              ${agents.filter(a => a.status === 'active').map(a => `<option value="${a.id}">${a.username}</option>`).join('')}
+              ${agents.filter(a => a && a.status !== 'inactive' && a.status !== 'suspended' && a.status !== 'blocked').map(a => `<option value="${a.id}">${a.username}</option>`).join('')}
             </select>
             ${zySelectSearch('admin-bulk-client', 'Search clients…')}
             <select id="admin-bulk-client" style="display:none;">
               <option value="">— Select Client —</option>
-              ${clients.filter(cl => cl.status === 'active').map(cl => `<option value="${cl.id}">${cl.username}</option>`).join('')}
+              ${clients.filter(cl => cl && cl.status !== 'inactive' && cl.status !== 'suspended' && cl.status !== 'blocked').map(cl => `<option value="${cl.id}">${cl.username}</option>`).join('')}
             </select>
             <button class="btn btn-primary btn-sm" onclick="adminAssignSelected()"><i class="fas fa-user-plus"></i> Assign Selected</button>
             <button class="btn btn-danger btn-sm" onclick="adminRevokeSelected()"><i class="fas fa-rotate-left"></i> Revoke Selected</button>
@@ -1993,9 +1996,9 @@ async function adminQuickAssign(numberId, number) {
       apiFetch('/api/users?role=Manager&limit=500'),
       apiFetch('/api/agents?limit=500')
     ]);
-    const clients = (clientsData?.data || []).filter(c => c.status === 'active');
-    const managers = (managersData?.data || []).filter(m => m.status === 'active');
-    const agents = (agentsData?.data || []).filter(a => a.status === 'active');
+    const clients = (clientsData?.data || []).filter(c => c && c.status !== 'inactive' && c.status !== 'suspended' && c.status !== 'blocked');
+    const managers = (managersData?.data || []).filter(m => m && m.status !== 'inactive' && m.status !== 'suspended' && m.status !== 'blocked');
+    const agents = (agentsData?.data || []).filter(a => a && a.status !== 'inactive' && a.status !== 'suspended' && a.status !== 'blocked');
 
     openModal(`Assign Number — ${number}`, `
       <form onsubmit="adminSubmitQuickAssign(event, ${numberId})">
@@ -2108,9 +2111,9 @@ async function renderBulkAllocation() {
       apiFetch('/api/clients?limit=100000'),
       apiFetch('/api/numbers/sms-ranges')
     ]);
-    const managers = (managersData?.data || []).filter(m => m.status === 'active');
-    const agents = (agentsData?.data || []).filter(a => a.status === 'active');
-    const clients = (clientsData?.data || []).filter(c => c.status === 'active');
+    const managers = (managersData?.data || []).filter(m => m && m.status !== 'inactive' && m.status !== 'suspended' && m.status !== 'blocked');
+    const agents = (agentsData?.data || []).filter(a => a && a.status !== 'inactive' && a.status !== 'suspended' && a.status !== 'blocked');
+    const clients = (clientsData?.data || []).filter(c => c && c.status !== 'inactive' && c.status !== 'suspended' && c.status !== 'blocked');
     const rangeList = Array.isArray(ranges) ? ranges.filter(r => r.active !== false) : [];
 
     const c = document.getElementById('page-content');
@@ -4849,7 +4852,9 @@ async function renderPayoutRequests() {
 
 // ── PAYOUT INVOICE (PDF via print) ─────────────────────────────────
 function downloadPayoutInvoice(r) {
-  const invoiceNo = `MAIT-INV-${String(r.id).padStart(5, '0')}`;
+  const siteName = (window.__BRAND_SETTINGS__ && window.__BRAND_SETTINGS__.site_name) || 'ALPHA SMS';
+  const prefix = siteName.replace(/[^A-Za-z0-9]/g, '').slice(0, 5).toUpperCase() || 'ALPHA';
+  const invoiceNo = `${prefix}-INV-${String(r.id).padStart(5, '0')}`;
   const dateStr = fmtShort(r.paid_at || r.timestamp);
   const win = window.open('', '_blank');
   win.document.write(`
@@ -5032,6 +5037,7 @@ async function submitAddManager(event) {
       email: document.getElementById('nm-email').value,
       password,
       phone: document.getElementById('nm-phone').value,
+      status: 'active',
       balance: parseFloat(document.getElementById('nm-bal').value) || 0
     };
 
@@ -5134,7 +5140,7 @@ async function submitAdminAddAgent(event) {
 
 async function openAdminAddClientModal() {
   const agentsData = await apiFetch('/api/agents?limit=500');
-  const agents = (agentsData?.data || []).filter(a => a.status === 'active');
+  const agents = (agentsData?.data || []).filter(a => a && a.status !== 'inactive' && a.status !== 'suspended' && a.status !== 'blocked');
   openModal('Add New Client', `
     <form id="admin-add-client-form" onsubmit="submitAdminAddClient(event)">
       <div class="form-row">
@@ -7328,23 +7334,34 @@ async function renderGeneralSettings() {
 
             <div class="form-group">
               <label class="form-label" style="font-weight:600;">Brand Logo & Icon</label>
-              <div style="display:flex;align-items:center;gap:16px;background:#f8fafc;padding:14px;border-radius:10px;border:1px dashed #cbd5e1;">
-                <div style="width:74px;height:74px;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:6px;position:relative;">
-                  <img id="logo-preview-img" src="${curLogo}" alt="Logo Preview" style="max-height:100%;max-width:100%;object-fit:contain;">
-                </div>
-                <div style="flex:1;">
-                  <div style="font-size:13px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
-                    <span>Upload & Crop Brand Logo</span>
-                    <span class="badge badge-black" style="font-size:10px;padding:2px 6px;"><i class="fas fa-crop-alt"></i> Cropper Enabled</span>
+              <div style="background:#f8fafc;padding:16px;border-radius:12px;border:1.5px dashed #cbd5e1;display:flex;flex-direction:column;gap:12px;">
+                <div style="display:flex;align-items:center;gap:16px;">
+                  <div style="width:80px;height:80px;background:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.08);padding:8px;position:relative;border:1px solid #e2e8f0;flex-shrink:0;">
+                    <img id="logo-preview-img" src="${curLogo}" alt="Logo Preview" style="max-height:100%;max-width:100%;object-fit:contain;">
                   </div>
-                  <input type="file" id="logo-file-input" accept="image/*" onchange="handleLogoFileSelect(event)" style="font-size:12px;display:block;margin-bottom:8px;">
-                  <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                    <button type="button" class="btn btn-primary btn-sm" onclick="cropCurrentLogo()" style="font-size:11px;padding:4px 10px;background:#000;color:#fff;border:1px solid #000;">
-                      <i class="fas fa-crop-alt"></i> Crop & Adjust Logo
-                    </button>
-                    <button type="button" class="btn btn-outline btn-sm" onclick="resetDefaultLogo()" style="font-size:11px;padding:4px 8px;">
-                      <i class="fas fa-undo"></i> Reset to Default
-                    </button>
+                  <div style="flex:1;">
+                    <div style="font-size:13.5px;font-weight:700;color:#0f172a;margin-bottom:4px;display:flex;align-items:center;gap:8px;">
+                      <span>Upload Picture Directly to Project</span>
+                      <span class="badge badge-black" style="font-size:10px;padding:2px 8px;background:#0284c7;color:#fff;"><i class="fas fa-database"></i> Permanent Storage</span>
+                    </div>
+                    <div style="font-size:11.5px;color:#64748b;margin-bottom:8px;line-height:1.4;">
+                      Picture project ke andar (<code style="background:#e2e8f0;padding:1px 4px;border-radius:3px;">RTX SMS/static/img/custom-logo.png</code>) aur database me permanent store hogi. Agar aap PC se original file delete bhi kar den, logo yahan se kabhi remove nahi hoga!
+                    </div>
+                    <input type="file" id="logo-file-input" accept="image/*" onchange="directUploadLogo(event)" style="font-size:12px;display:block;margin-bottom:10px;">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                      <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('logo-file-input').click()" style="font-size:11.5px;padding:6px 12px;background:#0284c7;color:#fff;border:none;">
+                        <i class="fas fa-upload" style="margin-right:4px;"></i> 1-Click Upload Picture
+                      </button>
+                      <button type="button" class="btn btn-outline btn-sm" onclick="resetDefaultLogo()" style="font-size:11.5px;padding:6px 10px;" title="Standard wide logo">
+                        <i class="fas fa-image" style="margin-right:4px;"></i> Wide Logo (چوڑا لوگو)
+                      </button>
+                      <button type="button" class="btn btn-outline btn-sm" onclick="setCircleLogo()" style="font-size:11.5px;padding:6px 10px;" title="Round circular badge logo">
+                        <i class="fas fa-circle-notch" style="margin-right:4px;"></i> Round Logo (گول لوگو)
+                      </button>
+                      <button type="button" class="btn btn-outline btn-sm" onclick="cropCurrentLogo()" style="font-size:11.5px;padding:6px 12px;">
+                        <i class="fas fa-crop-alt" style="margin-right:4px;"></i> Crop & Adjust
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -7928,12 +7945,21 @@ function previewFontFamily(fontKey) {
 }
 
 function resetDefaultLogo() {
-  const def = '/static/img/mait-sms-logo.png';
+  const def = '/static/img/alphasms-logo.svg';
   document.getElementById('s-logo-url').value = def;
   document.getElementById('logo-preview-img').src = def;
   const prevLogo = document.getElementById('preview-bar-logo');
   if (prevLogo) prevLogo.src = def;
-  toast('Reset to default logo. Click Save to apply.', 'info');
+  toast('Selected Standard Wide ALPHA SMS Logo. Click Save to apply.', 'info');
+}
+
+function setCircleLogo() {
+  const def = '/static/img/alphasms-circle-logo.svg';
+  document.getElementById('s-logo-url').value = def;
+  document.getElementById('logo-preview-img').src = def;
+  const prevLogo = document.getElementById('preview-bar-logo');
+  if (prevLogo) prevLogo.src = def;
+  toast('Selected Round / Circle ALPHA SMS Badge. Click Save to apply.', 'info');
 }
 
 // ── Logo Cropping System ──────────────────────────────────────────
@@ -7944,6 +7970,35 @@ function cropCurrentLogo() {
               document.getElementById('logo-preview-img')?.src || 
               '/static/img/mait-sms-logo.png';
   openLogoCropModal(cur, 'Current Logo');
+}
+
+async function directUploadLogo(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  if (file.size > 15 * 1024 * 1024) {
+    toast('Image file too large (max 15MB)', 'error');
+    e.target.value = '';
+    return;
+  }
+
+  toast('Uploading picture directly into project...', 'info');
+  const reader = new FileReader();
+  reader.onload = async function(evt) {
+    try {
+      const dataUrl = evt.target.result;
+      await uploadLogoData(dataUrl);
+      toast('✅ Picture saved permanently inside project!', 'success');
+    } catch(err) {
+      toast('Upload failed: ' + err.message, 'error');
+    }
+    e.target.value = '';
+  };
+  reader.onerror = function() {
+    toast('Could not read image file', 'error');
+    e.target.value = '';
+  };
+  reader.readAsDataURL(file);
 }
 
 function handleLogoFileSelect(e) {

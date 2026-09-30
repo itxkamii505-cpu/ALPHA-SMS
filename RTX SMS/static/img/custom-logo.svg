@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 180" width="100%" height="100%">
+  <defs>
+    <!-- Vibrant Blue-Cyan Gradient -->
+    <linearGradient id="alphaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="35%" stop-color="#2563eb"/>
+      <stop offset="70%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#00d2ff"/>
+    </linearGradient>
+
+    <!-- Outer Arc Gradient -->
+    <linearGradient id="arcGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="50%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#00f2fe"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Centered Icon: Telecom Message Bubble with 3 Dots & Dynamic Orbital Arc -->
+  <g transform="translate(170, 52)">
+    <!-- Outer Orbital Dynamic Arc -->
+    <path d="M -46,-12 C -46,-34 -24,-48 0,-48 C 26,-48 46,-32 46,-10" 
+          fill="none" stroke="url(#arcGrad)" stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M 44,12 C 42,32 22,46 -2,46 C -28,46 -46,30 -46,8" 
+          fill="none" stroke="url(#alphaGrad)" stroke-width="6.5" stroke-linecap="round"/>
+
+    <!-- Inner Speech Bubble -->
+    <path d="M -24,-20 C -24,-31 -13,-40 0,-40 C 13,-40 24,-31 24,-20 C 24,-9 13,0 0,0 C -5,0 -10,-1 -14,-4 L -23,1 L -20,-8 C -22,-11 -24,-15 -24,-20 Z" 
+          transform="translate(0, 16)"
+          fill="url(#alphaGrad)"/>
+
+    <!-- 3 Message Dots inside Bubble -->
+    <circle cx="-7" cy="-4" r="2.8" fill="#ffffff"/>
+    <circle cx="0" cy="-4" r="2.8" fill="#ffffff"/>
+    <circle cx="7" cy="-4" r="2.8" fill="#ffffff"/>
+  </g>
+
+  <!-- Typography: ALPHA -->
+  <text x="170" y="132" 
+        text-anchor="middle"
+        font-family="'Inter', 'Montserrat', -apple-system, sans-serif" 
+        font-size="34" 
+        font-weight="900" 
+        letter-spacing="4" 
+        fill="url(#alphaGrad)">ALPHA</text>
+
+  <!-- Divider lines with SMS in center -->
+  <g transform="translate(170, 156)">
+    <!-- Left line -->
+    <line x1="-100" y1="0" x2="-38" y2="0" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- SMS text -->
+    <text x="0" y="5.5" 
+          text-anchor="middle"
+          font-family="'Inter', 'Montserrat', -apple-system, sans-serif" 
+          font-size="16" 
+          font-weight="900" 
+          letter-spacing="5" 
+          fill="#0284c7">SMS</text>
+    <!-- Right line -->
+    <line x1="38" y1="0" x2="100" y2="0" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+</svg>

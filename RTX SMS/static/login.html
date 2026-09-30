@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ALPHA SMS | Login</title>
-<link rel="icon" type="image/png" href="/static/img/custom-logo.png">
+<link rel="icon" type="image/svg+xml" href="/static/img/alphasms-logo.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script>
 (function(){
@@ -17,349 +17,362 @@
       var c = localStorage.getItem('app_brand_settings');
       if (c) s = JSON.parse(c);
     }
-    if (s) {
-      var r = document.documentElement;
-      if (s.font_family) r.style.setProperty('--font-family', s.font_family);
-      if (s.header_gradient) r.style.setProperty('--header-gradient', s.header_gradient);
-      if (s.header_text_color) r.style.setProperty('--header-text-color', s.header_text_color);
-      if (s.site_name) document.title = s.site_name + ' | Login';
+    if (s && s.site_name) {
+      document.title = s.site_name + ' | Login';
     }
   } catch(e) {}
 })();
 </script>
 <script src="/static/js/brand-theme.js"></script>
+<script src="/static/js/speed-auth-guard.js"></script>
 <style>
-:root {
-  --font-family: 'Roboto', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --bg-deep: #13192f;
-  --card-bg: #cdd7ea;
-  --card-text: #1e2438;
-  --input-bg: #e8eef8;
-  --input-border: #b8c7df;
-  --btn-green: #34be45;
-  --btn-green-hover: #2fa83d;
-  --whatsapp: #25D366;
-  --telegram: #229ED9;
-}
-* { margin:0; padding:0; box-sizing:border-box; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-  font-family: var(--font-family);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
-  background: radial-gradient(circle at 50% 20%, #1e2848 0%, #13192f 55%, #0c1020 100%);
-  color: #fff;
+  align-items: center;
+  justify-content: center;
+  background-color: #241917;
+  background-image: radial-gradient(circle at 50% 25%, #3d2a27 0%, #201514 100%);
+  color: #111827;
+  padding: 20px 14px;
   position: relative;
   overflow-x: hidden;
 }
 
-/* ── Top Bar ── */
-.top-nav {
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 16px 20px 8px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  z-index: 10;
-}
-.top-nav-lang {
-  width: 38px;
-  height: 38px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #cbd5e1;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.top-nav-lang:hover {
-  background: rgba(255, 255, 255, 0.16);
-  color: #fff;
-}
-.top-nav-testpanel {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: #ffffff;
-  color: #1e2438;
-  text-decoration: none;
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  padding: 8px 18px;
-  border-radius: 9999px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  transition: all 0.2s ease;
-}
-.top-nav-testpanel:hover {
-  background: #f1f5f9;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
-  color: #0f172a;
-}
-
-/* ── Center Login Area ── */
-.login-wrapper {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 16px 28px;
-  z-index: 10;
-}
+/* ── Centered Card Matching Screenshot ── */
 .login-card {
   width: 100%;
-  max-width: 380px;
-  background: var(--card-bg);
+  max-width: 410px;
+  background: #ffffff;
   border-radius: 28px;
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
-  padding: 34px 28px 26px;
-  color: var(--card-text);
-  animation: cardFadeIn 0.5s ease both;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  padding: 44px 34px 38px;
+  animation: cardFadeIn 0.35s ease both;
 }
 @keyframes cardFadeIn {
-  from { opacity: 0; transform: translateY(18px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+/* ── Logo Box (Supports Circular & Wide Logos) ── */
 .brand-logo-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 12px;
+  min-height: 85px;
 }
 .brand-logo-img {
-  max-width: 140px;
-  max-height: 85px;
+  max-width: 260px;
+  max-height: 95px;
+  width: auto;
+  height: auto;
   object-fit: contain;
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.15));
+  display: block;
+  transition: all 0.2s ease;
 }
-.login-card-title {
+.brand-logo-img.is-circle {
+  width: 92px;
+  height: 92px;
+  max-width: 92px;
+  max-height: 92px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  background: #ffffff;
+}
+
+/* ── Clean Subtitle from Screenshot ── */
+.login-sub {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
   text-align: center;
-  font-size: 22px;
-  font-weight: 800;
-  color: #1e2438;
-  margin: 10px 0 22px;
+  margin-top: 14px;
+  margin-bottom: 24px;
   letter-spacing: -0.2px;
 }
 
-/* ── Form Inputs ── */
-.input-pill {
-  position: relative;
-  margin-bottom: 16px;
-  background: var(--input-bg);
-  border: 1.5px solid transparent;
-  border-radius: 20px;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-}
-.input-pill:focus-within {
-  background: #ffffff;
-  border-color: #34be45;
-  box-shadow: 0 0 0 3px rgba(52, 190, 69, 0.18);
-}
-.input-icon {
-  position: absolute;
-  left: 18px;
-  color: #7d8ea6;
-  font-size: 15px;
-  pointer-events: none;
-}
-.input-pill input {
-  width: 100%;
-  padding: 14px 44px 14px 46px;
-  border: none;
-  background: transparent;
-  font-family: inherit;
-  font-size: 14.5px;
-  font-weight: 500;
-  color: #1e2438;
-  outline: none;
-}
-.input-pill input::placeholder {
-  color: #8c9eb5;
-  font-weight: 400;
-}
-.eye-toggle {
-  position: absolute;
-  right: 14px;
-  background: transparent;
-  border: none;
-  color: #7d8ea6;
-  font-size: 15px;
-  cursor: pointer;
-  padding: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.2s;
-}
-.eye-toggle:hover {
-  color: #1e2438;
-}
-
-/* ── Error Msg ── */
+/* ── Error Box ── */
 .login-err {
-  background: #ffe4e6;
-  color: #be123c;
-  border: 1px solid #fecdd3;
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
   padding: 10px 14px;
   border-radius: 12px;
   font-size: 13px;
   font-weight: 600;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
   text-align: center;
 }
 
-/* ── Submit Button ── */
+/* ── Pill Input Fields from Screenshot ── */
+.pill-input-wrap {
+  position: relative;
+  background: #eaedf1;
+  border-radius: 9999px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  margin-bottom: 16px;
+  border: 1.5px solid transparent;
+  transition: all 0.2s ease;
+}
+.pill-input-wrap:focus-within {
+  background: #f1f4f8;
+  border-color: #cbd5e1;
+  box-shadow: 0 0 0 3px rgba(72, 187, 38, 0.15);
+}
+.pill-icon {
+  color: #64748b;
+  font-size: 16px;
+  margin-right: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  flex-shrink: 0;
+}
+.pill-input-wrap input {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  color: #111827;
+  outline: none;
+}
+.pill-input-wrap input::placeholder {
+  color: #8c9ba5;
+  font-weight: 500;
+}
+.eye-toggle {
+  background: transparent;
+  border: none;
+  color: #8c9ba5;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 6px;
+  margin-left: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s;
+}
+.eye-toggle:hover {
+  color: #334155;
+}
+
+/* ── Inline Captcha from Screenshot ── */
+.captcha-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  margin-bottom: 24px;
+  padding-left: 6px;
+  user-select: none;
+  flex-wrap: wrap;
+}
+.captcha-question {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  letter-spacing: -0.2px;
+}
+.captcha-box-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.captcha-input {
+  width: 110px;
+  height: 38px;
+  background: #ffffff;
+  border: 1.5px solid #4a5568;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  text-align: left;
+  outline: none;
+  transition: all 0.2s ease;
+}
+.captcha-input:focus {
+  border-color: #48bb26;
+  box-shadow: 0 0 0 2px rgba(72, 187, 38, 0.2);
+}
+.captcha-input::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+  font-style: italic;
+}
+.captcha-reload {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+.captcha-reload:hover {
+  color: #111827;
+  transform: rotate(45deg);
+}
+
+/* ── Vibrant Green LOGIN Pill Button from Screenshot ── */
 .login-btn-green {
   width: 100%;
-  padding: 14px 20px;
-  border-radius: 20px;
+  height: 52px;
+  border-radius: 9999px;
   border: none;
-  background: var(--btn-green);
+  background: #48bb26;
   color: #ffffff;
   font-family: inherit;
   font-size: 16px;
   font-weight: 800;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
   cursor: pointer;
-  box-shadow: 0 6px 18px rgba(52, 190, 69, 0.35);
+  box-shadow: 0 4px 12px rgba(72, 187, 38, 0.28);
   transition: all 0.2s ease;
-  margin-top: 4px;
 }
 .login-btn-green:hover {
-  background: var(--btn-green-hover);
+  background: #3ea81e;
   transform: translateY(-1px);
-  box-shadow: 0 8px 22px rgba(52, 190, 69, 0.45);
+  box-shadow: 0 6px 16px rgba(72, 187, 38, 0.38);
 }
 .login-btn-green:active {
   transform: translateY(0);
 }
 .login-btn-green:disabled {
-  opacity: 0.75;
+  opacity: 0.7;
   cursor: not-allowed;
   transform: none;
 }
 
-/* ── Social Row ── */
-.social-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  margin-top: 22px;
-}
-.social-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  font-size: 20px;
-  text-decoration: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s ease;
-}
-.social-btn.whatsapp-btn {
-  background: var(--whatsapp);
-}
-.social-btn.telegram-btn {
-  background: var(--telegram);
-}
-.social-btn:hover {
-  transform: scale(1.08);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
-}
-
-@media (max-width: 420px) {
+@media (max-width: 440px) {
   .login-card {
-    padding: 28px 22px 22px;
-    border-radius: 24px;
+    padding: 34px 22px 30px;
+    border-radius: 22px;
   }
 }
 </style>
 </head>
 <body>
 
-<header class="top-nav">
-  <div class="top-nav-lang" title="Language"><i class="fas fa-language"></i></div>
-  <a href="/public" class="top-nav-testpanel"><i class="fas fa-flask"></i> TEST PANEL</a>
-</header>
+<main class="login-card">
+  <!-- Brand Logo -->
+  <div class="brand-logo-wrap">
+    <img id="login-logo-img" class="brand-logo-img" src="/static/img/alphasms-logo.svg" onerror="this.onerror=null;this.src='/static/img/custom-logo.png';" alt="ALPHA SMS">
+  </div>
 
-<main class="login-wrapper">
-  <div class="login-card">
-    <div class="brand-logo-wrap">
-      <img id="login-logo-img" class="brand-logo-img" src="/static/img/custom-logo.png" onerror="this.onerror=null;this.src='/static/img/mait-sms-logo.png';" alt="ALPHA SMS">
+  <!-- Subtitle matching user screenshot -->
+  <div class="login-sub">Please sign in to continue.</div>
+
+  <!-- Error Notification -->
+  <div id="errorMsg" class="login-err" style="display:none;"></div>
+
+  <!-- Login Form -->
+  <form id="loginForm" novalidate>
+    <!-- Username -->
+    <div class="pill-input-wrap">
+      <i class="fas fa-envelope pill-icon"></i>
+      <input type="text" id="username" name="username" placeholder="Username" autocomplete="username" required>
     </div>
 
-    <h1 class="login-card-title">Account Login</h1>
+    <!-- Password -->
+    <div class="pill-input-wrap">
+      <i class="fas fa-lock pill-icon"></i>
+      <input type="password" id="password" name="password" placeholder="Password" autocomplete="current-password" required>
+      <button type="button" class="eye-toggle" id="togglePassword" aria-label="Toggle password visibility">
+        <i class="far fa-eye" id="eyeIcon"></i>
+      </button>
+    </div>
 
-    <div id="errorMsg" class="login-err" style="display:none;"></div>
-
-    <form id="loginForm" novalidate>
-      <div class="input-pill">
-        <i class="far fa-user input-icon"></i>
-        <input type="text" id="username" name="username" placeholder="Username" autocomplete="username" required>
-      </div>
-
-      <div class="input-pill">
-        <i class="fas fa-lock input-icon"></i>
-        <input type="password" id="password" name="password" placeholder="Password" autocomplete="current-password" required>
-        <button type="button" class="eye-toggle" id="togglePassword" aria-label="Toggle password visibility">
-          <i class="far fa-eye" id="eyeIcon"></i>
+    <!-- Inline Math Captcha -->
+    <div class="captcha-container">
+      <span class="captcha-question" id="captchaQuestion">What is 12 + 5 =</span>
+      <div class="captcha-box-wrap">
+        <input type="number" id="captchaInput" class="captcha-input" placeholder="Answer" autocomplete="off" required>
+        <button type="button" class="captcha-reload" id="reloadCaptcha" title="Change Question" aria-label="Refresh Captcha">
+          <i class="fas fa-sync-alt"></i>
         </button>
       </div>
-
-      <button type="submit" class="login-btn-green" id="submitBtn">LOGIN</button>
-    </form>
-
-    <div class="social-row">
-      <a href="https://wa.me/" target="_blank" rel="noopener noreferrer" class="social-btn whatsapp-btn" title="Contact via WhatsApp">
-        <i class="fab fa-whatsapp"></i>
-      </a>
-      <a href="https://t.me/" target="_blank" rel="noopener noreferrer" class="social-btn telegram-btn" title="Contact via Telegram">
-        <i class="fab fa-telegram-plane"></i>
-      </a>
     </div>
-  </div>
+
+    <!-- Green LOGIN Button -->
+    <button type="submit" class="login-btn-green" id="submitBtn">LOGIN</button>
+  </form>
 </main>
 
 <script>
-// Load brand settings (site_name, logo_url, font_family, theme_color)
+// Synchronous instant brand load (zero lag / zero flash)
+function applyBrandUI(s) {
+  if (!s) return;
+  const name = s.site_name || 'ALPHA SMS';
+  document.title = name + ' | Login';
+  if (s.logo_url) {
+    const logoEl = document.getElementById('login-logo-img');
+    if (logoEl) {
+      logoEl.src = s.logo_url;
+      const checkRatio = function() {
+        const nw = logoEl.naturalWidth || 1;
+        const nh = logoEl.naturalHeight || 1;
+        const ratio = nw / nh;
+        const isCircle = (ratio >= 0.75 && ratio <= 1.3) || s.logo_url.includes('circle') || s.logo_url.includes('round') || s.logo_url.includes('mark');
+        if (isCircle) {
+          logoEl.classList.add('is-circle');
+        } else {
+          logoEl.classList.remove('is-circle');
+        }
+      };
+      if (logoEl.complete) checkRatio();
+      else logoEl.onload = checkRatio;
+    }
+  }
+}
+
+// 1. Apply immediately from window.__BRAND_SETTINGS__ or localStorage (0ms delay)
+try {
+  const instant = window.__BRAND_SETTINGS__ || JSON.parse(localStorage.getItem('app_brand_settings') || '{}');
+  if (instant && Object.keys(instant).length) applyBrandUI(instant);
+} catch (e) {}
+
+// 2. Refresh silently in background if needed
 (async function loadSettings() {
   try {
     const res = await fetch('/api/settings');
     if (res.ok) {
       const s = await res.json();
-      if (s) {
-        if (s.site_name) {
-          document.title = s.site_name + ' | Login';
-          const logoEl = document.getElementById('login-logo-img');
-          if (logoEl) logoEl.alt = s.site_name;
-        }
-        if (s.logo_url) {
-          const logoEl = document.getElementById('login-logo-img');
-          if (logoEl) logoEl.src = s.logo_url;
-        }
-        if (s.font_family) {
-          document.documentElement.style.setProperty('--font-family', s.font_family);
-          document.body.style.fontFamily = s.font_family;
-        }
-      }
+      if (s) applyBrandUI(s);
     }
   } catch (_) {}
 })();
+
+// Math Captcha Logic
+let captchaAnswer = 0;
+function generateCaptcha() {
+  const n1 = Math.floor(Math.random() * 12) + 1;
+  const n2 = Math.floor(Math.random() * 12) + 1;
+  captchaAnswer = n1 + n2;
+  const qEl = document.getElementById('captchaQuestion');
+  if (qEl) qEl.textContent = 'What is ' + n1 + ' + ' + n2 + ' =';
+  const inp = document.getElementById('captchaInput');
+  if (inp) inp.value = '';
+}
+const reloadBtn = document.getElementById('reloadCaptcha');
+if (reloadBtn) reloadBtn.addEventListener('click', generateCaptcha);
+generateCaptcha();
 
 const loginForm = document.getElementById('loginForm');
 const username = document.getElementById('username');
@@ -391,47 +404,85 @@ loginForm.addEventListener('submit', async (e) => {
   hideError();
 
   const u = username.value.trim();
-  const p = password.value;
-  if (!u || !p) {
-    showError('Please enter both username and password.');
+  const p = password.value.trim();
+
+  if (!u) {
+    showError('Please enter your username');
+    username.focus();
+    return;
+  }
+  if (!p) {
+    showError('Please enter your password');
+    password.focus();
+    return;
+  }
+
+  const captchaInp = document.getElementById('captchaInput');
+  const userAns = parseInt((captchaInp ? captchaInp.value : '').trim(), 10);
+  if (isNaN(userAns) || userAns !== captchaAnswer) {
+    showError('Incorrect captcha answer. Please try again.');
+    generateCaptcha();
+    if (captchaInp) captchaInp.focus();
     return;
   }
 
   submitBtn.disabled = true;
-  submitBtn.textContent = 'SIGNING IN...';
+  submitBtn.textContent = 'LOGGING IN...';
 
   try {
-    const response = await fetch('/api/auth/login', {
+    const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: u, password: p })
     });
 
-    let data = {};
-    try { data = await response.json(); } catch (_) {}
+    const data = await res.json();
 
-    if (response.ok && data.success) {
-      sessionStorage.setItem('admin_logged_in', '1');
-      sessionStorage.setItem('admin_user', JSON.stringify(data));
-      const ROLE_URL = {
-        Owner: '/ints/owner/SMSDashboard',
-        Admin: '/ints/owner/SMSDashboard',
-        Manager: '/ints/manager/SMSDashboard',
-        Agent: '/ints/agent/SMSDashboard',
-        Client: '/ints/client/SMSDashboard',
-        Reseller: '/ints/client/SMSDashboard'
-      };
-      window.location.href = data.role === 'TestPanel' ? '/public' : (ROLE_URL[data.role] || '/ints/owner/SMSDashboard');
+    if (!res.ok || !data.success) {
+      showError(data.error || data.detail || 'Invalid username or password');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'LOGIN';
       return;
     }
-    throw new Error(data.detail || data.error || 'Invalid username or password');
+
+    const userObj = data.user || {
+      id: data.id || 1,
+      username: data.username || u,
+      role: data.role || 'Owner'
+    };
+
+    if (window.SpeedAuth) {
+      window.SpeedAuth.setSession(userObj, data.token);
+      const targetUrl = window.SpeedAuth.getRoleRedirect(userObj.role);
+      window.location.replace(targetUrl);
+    } else {
+      sessionStorage.setItem('admin_logged_in', '1');
+      sessionStorage.setItem('admin_user', JSON.stringify(userObj));
+      localStorage.setItem('admin_logged_in', '1');
+      localStorage.setItem('admin_user', JSON.stringify(userObj));
+      localStorage.setItem('active_session_active', '1');
+      localStorage.setItem('active_session_role', userObj.role || 'Owner');
+
+      const role = (userObj.role || data.role || '').toLowerCase();
+      if (role === 'testpanel') {
+        window.location.href = '/testpanel';
+      } else if (role === 'client' || role === 'reseller') {
+        window.location.href = '/ints/client/SMSDashboard';
+      } else if (role === 'manager') {
+        window.location.href = '/ints/manager/SMSDashboard';
+      } else if (role === 'agent') {
+        window.location.href = '/ints/agent/SMSDashboard';
+      } else {
+        window.location.href = '/owner';
+      }
+    }
   } catch (err) {
-    showError(err.message || 'Login failed. Please check your credentials.');
-  } finally {
+    showError('Network error. Please try again.');
     submitBtn.disabled = false;
     submitBtn.textContent = 'LOGIN';
   }
 });
 </script>
+
 </body>
 </html>

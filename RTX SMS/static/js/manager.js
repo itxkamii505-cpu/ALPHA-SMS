@@ -9,34 +9,33 @@ let MANAGER_USER = {};
 // ── Auth guard ────────────────────────────────────────────────────
 (function init() {
   try {
-    if (sessionStorage.getItem('admin_logged_in') !== '1') {
-      try {
-        if (window.top && window.top !== window) {
-          window.top.location.href = '/login';
-          return;
-        }
-      } catch (e) {}
-      window.location.href = '/login';
-      return;
+    if (window.SpeedAuth) {
+      if (!window.SpeedAuth.enforce(['Manager'])) return;
+    } else {
+      if (sessionStorage.getItem('admin_logged_in') !== '1') {
+        try {
+          if (window.top && window.top !== window) {
+            window.top.location.href = '/login';
+            return;
+          }
+        } catch (e) {}
+        window.location.href = '/login';
+        return;
+      }
+      const checkU = JSON.parse(sessionStorage.getItem('admin_user') || '{}');
+      if (checkU.role !== 'Manager') {
+        window.location.href = '/login';
+        return;
+      }
     }
-    MANAGER_USER = JSON.parse(sessionStorage.getItem('admin_user') || '{}');
-    if (!['Manager', 'Admin', 'Owner'].includes(MANAGER_USER.role)) {
-      try {
-        if (window.top && window.top !== window) {
-          window.top.location.href = '/dashboard';
-          return;
-        }
-      } catch (e) {}
-      window.location.href = '/dashboard';
-      return;
-    }
+    MANAGER_USER = JSON.parse(sessionStorage.getItem('admin_user') || localStorage.getItem('admin_user') || '{}');
     MANAGER_ID = MANAGER_USER.id;
 
     const u = MANAGER_USER.username || 'Manager';
     const el = document.getElementById('mgr-username');
     if (el) el.textContent = u;
     const sub = document.getElementById('mgr-name-sub');
-    if (sub) sub.textContent = MANAGER_USER.role + ' Account';
+    if (sub) sub.textContent = (MANAGER_USER.role || 'Manager') + ' Account';
   } catch (err) {
     console.error('Auth init error:', err);
     window.top.location.href = '/login';
@@ -288,11 +287,11 @@ function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const wrapper = document.querySelector('.main-wrapper');
   if (!sidebar) return;
-  if (window.innerWidth <= 900) {
+  if (window.innerWidth < 992) {
     sidebar.classList.toggle('open');
   } else {
-    sidebar.classList.toggle('collapsed');
-    if (wrapper) wrapper.classList.toggle('sidebar-collapsed');
+    sidebar.classList.remove('collapsed');
+    if (wrapper) wrapper.classList.remove('sidebar-collapsed');
   }
 }
 
@@ -311,8 +310,12 @@ function toggleGroup(id) {
 
 // ── Logout ────────────────────────────────────────────────────────
 function doLogout() {
+  if (window.SpeedAuth) {
+    window.SpeedAuth.clearSession();
+    return;
+  }
   try {
-    ['admin_logged_in', 'admin_user', 'admin_current_page', 'manager_current_page', 'agent_current_page', 'client_current_page', 'tp_logged_in', 'tp_user', 'tp_current_page'].forEach(k => {
+    ['admin_logged_in', 'admin_user', 'active_session_active', 'active_session_role', 'admin_current_page', 'manager_current_page', 'agent_current_page', 'client_current_page', 'tp_logged_in', 'tp_user', 'tp_current_page'].forEach(k => {
       sessionStorage.removeItem(k);
       localStorage.removeItem(k);
     });
@@ -1867,7 +1870,9 @@ async function mgrRejectPayout(id) {
 
 // ── PAYOUT INVOICE (PDF via print) ─────────────────────────────────
 function downloadPayoutInvoice(r) {
-  const invoiceNo = `MAIT-INV-${String(r.id).padStart(5, '0')}`;
+  const siteName = (window.__BRAND_SETTINGS__ && window.__BRAND_SETTINGS__.site_name) || 'ALPHA SMS';
+  const prefix = siteName.replace(/[^A-Za-z0-9]/g, '').slice(0, 5).toUpperCase() || 'ALPHA';
+  const invoiceNo = `${prefix}-INV-${String(r.id).padStart(5, '0')}`;
   const dateStr = fmtShort(r.paid_at || r.timestamp);
   const win = window.open('', '_blank');
   win.document.write(`

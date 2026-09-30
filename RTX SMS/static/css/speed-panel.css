@@ -22,23 +22,48 @@ body.rmsui {
 body.rmsui * { box-sizing: border-box; }
 body.rmsui a { color: var(--brand-primary, #0284c7); text-decoration: none; }
 
-/* ── Desktop left sidebar ─────────────────────────────────────── */
+/* ── Desktop left sidebar (Fixed, Solid, Never Slides or Collapses on PC) ── */
+@media (min-width: 992px) {
+  .zy-side, .adminui .zy-side {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: 230px !important;
+    z-index: 1050 !important;
+    transform: none !important;
+    display: block !important;
+    overflow-y: auto !important;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.12) !important;
+  }
+  .zy-main, .adminui .zy-main {
+    margin-left: 230px !important;
+    min-height: 100vh !important;
+    transition: none !important;
+  }
+  body.sidebar-collapsed .zy-side {
+    transform: none !important;
+  }
+  body.sidebar-collapsed .zy-main {
+    margin-left: 230px !important;
+  }
+  .zy-hamb {
+    display: none !important;
+  }
+  .zy-side-close {
+    display: none !important;
+  }
+  .zy-side-backdrop {
+    display: none !important;
+  }
+}
+
 .zy-side {
   position: fixed; top: 0; left: 0; bottom: 0; width: 230px; z-index: 1050;
   background: #fff; border-right: 1px solid #cfcfcf; overflow-y: auto;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), margin-left 0.3s ease;
 }
 .zy-main {
-  margin-left: 230px; min-height: 100vh; background: #f9f9f9;
-  transition: margin-left 0.3s ease;
-}
-
-/* PC / Desktop toggle collapse */
-body.sidebar-collapsed .zy-side {
-  transform: translateX(-100%);
-}
-body.sidebar-collapsed .zy-main {
-  margin-left: 0;
+  min-height: 100vh; background: #f9f9f9;
 }
 
 /* Hide top mega menu completely: navigation is on the sidebar */

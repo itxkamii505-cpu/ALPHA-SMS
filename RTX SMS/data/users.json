@@ -1,5 +1,16 @@
 [
   {
+    "id": 3,
+    "username": "alpha",
+    "role": "Manager",
+    "email": "",
+    "password": "alpha ",
+    "phone": "",
+    "status": "active",
+    "balance": 0,
+    "created": "2026-09-30T06:17:13.823Z"
+  },
+  {
     "id": 1,
     "username": "Kamran_Bhatti",
     "password": "Kamran_Bhatti",
@@ -14,5 +25,21 @@
     "phone": "",
     "two_fa": false,
     "notes": "System Owner"
+  },
+  {
+    "id": 2,
+    "username": "admin",
+    "password": "admin",
+    "role": "Owner",
+    "email": "admin@alphasms.com",
+    "balance": 0,
+    "status": "active",
+    "numbers": 0,
+    "created": "2026-08-19T03:08:57.860886",
+    "last_login": null,
+    "company": null,
+    "phone": "",
+    "two_fa": false,
+    "notes": "System Administrator"
   }
 ]

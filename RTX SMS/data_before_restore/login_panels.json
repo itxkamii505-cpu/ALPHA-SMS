@@ -1,11 +1,11 @@
 [
   {
     "id": 1,
-    "name": "ASTRA",
+    "name": "ALPHA",
     "username": "Moeezbhatti",
     "password": "Moeezbhatti786#",
-    "panel_url": "https://astrasms.com/login",
-    "data_url": "https://astrasms.com/agent/SMSReports",
+    "panel_url": "https://alphasms.com/login",
+    "data_url": "https://alphasms.com/agent/SMSReports",
     "interval": 10,
     "rows": 200,
     "columns": null,

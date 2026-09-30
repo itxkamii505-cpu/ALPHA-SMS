@@ -22,8 +22,15 @@ let TP_USER = {};
 })();
 
 function doLogout() {
-  ['tp_logged_in', 'tp_user', 'admin_logged_in', 'admin_user'].forEach(k => sessionStorage.removeItem(k));
-  window.location.replace('/ints/login');
+  if (window.SpeedAuth) {
+    window.SpeedAuth.clearSession();
+    return;
+  }
+  ['tp_logged_in', 'tp_user', 'admin_logged_in', 'admin_user', 'active_session_active', 'active_session_role'].forEach(k => {
+    try { sessionStorage.removeItem(k); } catch (e) {}
+    try { localStorage.removeItem(k); } catch (e) {}
+  });
+  window.location.replace('/login');
 }
 
 /* ── API + toast (the kit and the pages use these) ───────────── */

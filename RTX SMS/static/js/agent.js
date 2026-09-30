@@ -9,27 +9,26 @@ let AGENT_USER = {};
 // ── Auth guard ────────────────────────────────────────────────────
 (function init() {
   try {
-    if (sessionStorage.getItem('admin_logged_in') !== '1') {
-      try {
-        if (window.top && window.top !== window) {
-          window.top.location.href = '/login';
-          return;
-        }
-      } catch (e) {}
-      window.location.href = '/login';
-      return;
+    if (window.SpeedAuth) {
+      if (!window.SpeedAuth.enforce(['Agent'])) return;
+    } else {
+      if (sessionStorage.getItem('admin_logged_in') !== '1') {
+        try {
+          if (window.top && window.top !== window) {
+            window.top.location.href = '/login';
+            return;
+          }
+        } catch (e) {}
+        window.location.href = '/login';
+        return;
+      }
+      const checkU = JSON.parse(sessionStorage.getItem('admin_user') || '{}');
+      if (checkU.role !== 'Agent') {
+        window.location.href = '/login';
+        return;
+      }
     }
-    AGENT_USER = JSON.parse(sessionStorage.getItem('admin_user') || '{}');
-    if (!['Agent', 'Admin', 'Owner', 'Manager'].includes(AGENT_USER.role)) {
-      try {
-        if (window.top && window.top !== window) {
-          window.top.location.href = '/dashboard';
-          return;
-        }
-      } catch (e) {}
-      window.location.href = '/dashboard';
-      return;
-    }
+    AGENT_USER = JSON.parse(sessionStorage.getItem('admin_user') || localStorage.getItem('admin_user') || '{}');
     AGENT_ID = AGENT_USER.id;
 
     const uEl = document.getElementById('agent-username');
@@ -382,11 +381,11 @@ function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const wrapper = document.querySelector('.main-wrapper');
   if (!sidebar) return;
-  if (window.innerWidth <= 900) {
+  if (window.innerWidth < 992) {
     sidebar.classList.toggle('open');
   } else {
-    sidebar.classList.toggle('collapsed');
-    if (wrapper) wrapper.classList.toggle('sidebar-collapsed');
+    sidebar.classList.remove('collapsed');
+    if (wrapper) wrapper.classList.remove('sidebar-collapsed');
   }
 }
 
@@ -405,8 +404,12 @@ function toggleGroup(id) {
 
 // ── Logout ────────────────────────────────────────────────────────
 function doLogout() {
+  if (window.SpeedAuth) {
+    window.SpeedAuth.clearSession();
+    return;
+  }
   try {
-    ['admin_logged_in', 'admin_user', 'admin_current_page', 'manager_current_page', 'agent_current_page', 'client_current_page', 'tp_logged_in', 'tp_user', 'tp_current_page'].forEach(k => {
+    ['admin_logged_in', 'admin_user', 'active_session_active', 'active_session_role', 'admin_current_page', 'manager_current_page', 'agent_current_page', 'client_current_page', 'tp_logged_in', 'tp_user', 'tp_current_page'].forEach(k => {
       sessionStorage.removeItem(k);
       localStorage.removeItem(k);
     });
@@ -2637,7 +2640,9 @@ async function pgCreditNotes() {
 // ── PAYMENT REQUESTS ──────────────────────────────────────────────
 // ── PAYOUT INVOICE (PDF via print) ─────────────────────────────────
 function downloadPayoutInvoice(r) {
-  const invoiceNo = `MAIT-INV-${String(r.id).padStart(5, '0')}`;
+  const siteName = (window.__BRAND_SETTINGS__ && window.__BRAND_SETTINGS__.site_name) || 'ALPHA SMS';
+  const prefix = siteName.replace(/[^A-Za-z0-9]/g, '').slice(0, 5).toUpperCase() || 'ALPHA';
+  const invoiceNo = `${prefix}-INV-${String(r.id).padStart(5, '0')}`;
   const dateStr = fmtShort(r.paid_at || r.timestamp);
   const win = window.open('', '_blank');
   win.document.write(`
