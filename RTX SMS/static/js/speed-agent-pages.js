@@ -24,7 +24,7 @@ async function pgSmsRanges() {
     <div class="zy-panel-body"><div class="zy-loading">Loading…</div></div></div>`;
   const list = zyList(await apiFetch('/api/numbers/sms-ranges'));
   const rows = list.map(r => [
-    r.name || `${r.country || ''} ${r.provider || ''}`.trim(),
+    r.range_name || r.name || r.country || '—',
     r.prefix || '',
     r.test_number || '',
     r.currency || 'USD',
@@ -66,12 +66,13 @@ async function pgMySmsNumbers() {
     apiFetch('/api/numbers/sms-ranges')
   ]);
   ZY_RANGES = zyList(ranges);
-  ZY_S2['num-range'].items = ZY_RANGES.map(r => r.name || r.country || '');
+  ZY_S2['num-range'].items = ZY_RANGES.map(r => r.range_name || r.name || r.country || '');
   await zyFillClients('num-client', 'Select Client');
 
   const rows = zyList(nums).map(n => {
+    const rangeName = n.range_name || n.range_label || n.range || n.country || '—';
     const r = [
-      { v: n.range || `${n.country || ''} ${n.provider || ''}`.trim(), h: n.range || `${n.country || ''} ${n.provider || ''}`.trim() },
+      { v: rangeName, h: rangeName },
       n.prefix || '',
       n.number || '',
       { v: n.payout ?? '', h: `${n.payterm || 'Weekly'}<br>$ ${n.payout ?? 0}` },
@@ -139,7 +140,7 @@ async function pgSmsRateCard() {
     <div class="zy-panel-body"><div class="zy-loading">Loading…</div></div></div>`;
   const ranges = zyList(await apiFetch('/api/numbers/sms-ranges'));
   const rows = ranges.map(r => [
-    r.name || `${r.country || ''} ${r.provider || ''}`.trim(), r.prefix || '', r.test_number || '',
+    r.range_name || r.name || r.country || '—', r.prefix || '', r.test_number || '',
     r.currency || 'USD',
     { v: r.payout ?? '', h: r.payout != null ? `$ ${r.payout}` : zyNA('') },
     { v: '', h: zyNA('') }, { v: '', h: zyNA('') }, { v: '', h: zyNA('') }, { v: '', h: zyNA('') }
@@ -176,7 +177,7 @@ async function pgAccessSearchLoad() {
     .filter(s => zyInRange('cs', s.timestamp))
     .filter(s => !cli || String(s.cli || s.app || '').toLowerCase().includes(cli.toLowerCase()))
     .filter(s => !txt || String(s.message || '').toLowerCase().includes(txt.toLowerCase()))
-    .map(s => [zyDateOnly(s.timestamp), s.range || `${s.country || ''} ${s.provider || ''}`.trim()])
+    .map(s => [zyDateOnly(s.timestamp), s.range_name || s.range_label || s.range || s.country || '—'])
     .filter(r => { const k = r.join('|'); if (seen.has(k)) return false; seen.add(k); return true; });
   body.innerHTML = zyDT2('dt-cli', { cols: ['Date', 'Range'], rows, sort: 0, dir: -1 });
   zy2Render('dt-cli');
@@ -302,15 +303,19 @@ async function zyCdrPage(summary) {
   zyCrumb([summary ? 'SMS CDR Stats' : 'SMS CDR Reports']);
   c.innerHTML = `<div class="zy-intro">Here You can view all the SMS ${summary ? 'stats and grouped metrics' : 'detail records'}.</div>
     <div class="zy-filterbox">
-      <input class="zy-fb-input" id="rp-from" value="${zyToday()} 00:00:00">
-      <input class="zy-fb-input" id="rp-to" value="${zyToday()} 23:59:59">
-      <select class="zy-fb-input" id="rp-range"><option value="">Filter Range</option></select>
-      <select class="zy-fb-input" id="rp-client"><option value="">Filter Client</option></select>
-      <input class="zy-fb-input" id="rp-num" placeholder="Search Number">
-      <input class="zy-fb-input" id="rp-cli" placeholder="Search CLI">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <label style="font-size:12px;font-weight:700;color:var(--text-secondary,#64748b);">From Date:</label>
+        <input type="date" class="zy-fb-input" id="rp-from" value="${zyToday()}" style="cursor:pointer;padding:6px 10px;font-weight:600;min-width:130px;">
+        <label style="font-size:12px;font-weight:700;color:var(--text-secondary,#64748b);">To Date:</label>
+        <input type="date" class="zy-fb-input" id="rp-to" value="${zyToday()}" style="cursor:pointer;padding:6px 10px;font-weight:600;min-width:130px;">
+        <select class="zy-fb-input" id="rp-range"><option value="">Filter Range</option></select>
+        <select class="zy-fb-input" id="rp-client"><option value="">Filter Client</option></select>
+        <input class="zy-fb-input" id="rp-num" placeholder="Search Number">
+        <input class="zy-fb-input" id="rp-cli" placeholder="Search CLI">
+      </div>
       <div class="zy-groupby"><b>Group By :</b>
         ${['Date', 'Month', 'Range', 'Client', 'Number', 'CLI'].map(g =>
-          `<label><input type="checkbox" class="grp-chk" value="${g.toLowerCase()}" onchange="zyCdrLoad(${!!summary})"> ${g}</label>`).join('')}
+          `<label><input type="checkbox" class="grp-chk" value="${g.toLowerCase()}"> ${g}</label>`).join('')}
       </div>
       <div class="zy-fb-btns">
         <button class="zy-btn-orange" onclick="zy2Export('dt-cdr','csv')">Export Report</button>
@@ -318,14 +323,13 @@ async function zyCdrPage(summary) {
       </div>
     </div>
     <div class="zy-panel"><div class="zy-panel-head">${summary ? 'CDR Reports &amp; Stats' : 'SMS CDR Reports &amp; Stats'}</div>
-      <div class="zy-panel-body" id="rp-body"><div class="zy-loading">Loading…</div></div></div>`;
+      <div class="zy-panel-body" id="rp-body"><div class="zy-empty" style="padding:40px;text-align:center;color:var(--text-muted,#64748b);"><i class="fas fa-chart-bar" style="font-size:32px;margin-bottom:12px;display:block;opacity:0.6;"></i>Select filters above and click <b>Show Report</b> to view SMS stats.</div></div></div>`;
   const ranges = zyList(await apiFetch('/api/numbers/sms-ranges'));
   ZY_RANGES = ranges;
   const rEl = document.getElementById('rp-range');
   if (rEl) rEl.innerHTML = `<option value="">Filter Range</option>` +
-    ranges.map(r => `<option value="${r.id}">${zyEsc(r.name || r.country || '')}</option>`).join('');
+    ranges.map(r => `<option value="${r.id}">${zyEsc(r.range_name || r.name || r.country || '')}${r.prefix ? ` (${zyEsc(r.prefix)})` : ''}</option>`).join('');
   await zyFillClients('rp-client', 'Filter Client');
-  zyCdrLoad(summary);
 }
 
 async function zyCdrLoad(summary) {
@@ -401,7 +405,7 @@ async function zyCdrLoad(summary) {
   } else {
     const rows = data.map(s => [
       zyDateOnly(s.timestamp),
-      s.range || `${s.country || ''} ${s.provider || ''}`.trim(),
+      s.range_name || s.range_label || s.range || s.country || '—',
       s.number || '',
       (s.cli || s.app || '—'),
       zyClientName(s.client_id) || s.client || '—',
@@ -451,7 +455,7 @@ async function zyStatsPage(kind) {
   if (kind === 'range') {
     const ranges = zyList(await apiFetch('/api/numbers/sms-ranges'));
     document.getElementById('st-pick').innerHTML = `<option value="">Filter Range</option>` +
-      ranges.map(r => `<option value="${r.id}">${zyEsc(r.name || r.country)}</option>`).join('');
+      ranges.map(r => `<option value="${r.id}">${zyEsc(r.range_name || r.name || r.country)}</option>`).join('');
   }
   zyStatsLoad(kind);
 }
@@ -461,7 +465,7 @@ async function zyStatsLoad(kind) {
   const logs = zyList(await apiFetch(`/api/sms/logs?agent_id=${AGENT_ID}&limit=500`))
     .filter(s => zyInRange('st', s.timestamp));
   const keyOf = s => kind === 'client' ? zyClientName(s.client_id)
-                   : kind === 'range' ? (s.range || `${s.country || ''} ${s.provider || ''}`.trim())
+                   : kind === 'range' ? (s.range_name || s.range_label || s.range || s.country || '—')
                    : (s.number || '');
   const group = {};
   logs.forEach(s => {
@@ -676,11 +680,11 @@ async function zyTestPanel(voice) {
         apiFetch('/api/sms/test-logs?limit=500')
       ]);
   ZY_RANGES = zyList(ranges);
-  ZY_S2['tp-range'].items = ZY_RANGES.map(r => r.name || r.country || '');
+  ZY_S2['tp-range'].items = ZY_RANGES.map(r => r.range_name || r.name || r.country || '');
 
   if (voice) {
     ZY_TESTNUMS = zyList(nums).map(n => [
-      n.range || `${n.country || ''} ${n.provider || ''}`.trim(), n.prefix || '', n.number || '',
+      n.range_name || n.range_label || n.range || (n.country && n.provider && n.provider !== 'Manual' ? `${n.country} ${n.provider}` : (n.country || '—')), n.prefix || '', n.number || '',
       n.payout != null && n.payout !== '' ? n.payout : 'Ask',
       { v: '', h: `SD : <b>${n.sms_daily || 0}</b> | SW : <b>${n.sms_weekly || 0}</b>` }
     ]);
@@ -689,7 +693,7 @@ async function zyTestPanel(voice) {
     zy2Render('dt-testnums');
 
     const rows = zyList(logs).map(s => [
-      zyDateOnly(s.timestamp), s.range || `${s.country || ''} ${s.provider || ''}`.trim(),
+      zyDateOnly(s.timestamp), s.range_name || s.range_label || s.range || (s.country && s.provider && s.provider !== 'Manual' ? `${s.country} ${s.provider}` : (s.country || '—')),
       s.number || '', zyMaskCli(s.cli || s.app), s.message ? 'XXXXX' : ''
     ]);
     document.getElementById('tp-recent').innerHTML = zyDT2('dt-testlog', {
@@ -698,14 +702,14 @@ async function zyTestPanel(voice) {
     return;
   }
 
-  ZY_TESTNUMS = zyList(nums).map(n => [n.range_label || '—', n.number || '']);
+  ZY_TESTNUMS = zyList(nums).map(n => [n.range_name || n.range_label || n.range || (n.country ? `${n.country}` : '—'), n.number || '']);
   c.querySelector('.zy-panel-body').innerHTML = zyDT2('dt-testnums', {
     cols: ['Range', 'Test Number'], rows: ZY_TESTNUMS });
   zy2Render('dt-testnums');
 
   const mask = s => String(s || '').replace(/./g, '*').slice(0, 6);
   const rows = zyList(logs).map(s => [
-    zyDateOnly(s.timestamp), s.range_label || '—',
+    zyDateOnly(s.timestamp), s.range_name || s.range_label || s.range || (s.country ? `${s.country}` : '—'),
     s.number || '', zyMaskCli(s.cli), mask(s.message)
   ]);
   document.getElementById('tp-recent').innerHTML = zyDT2('dt-testlog', {

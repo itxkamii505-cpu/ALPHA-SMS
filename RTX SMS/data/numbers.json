@@ -3,22 +3,17 @@
     "id": 6682,
     "number": "51901820335",
     "app": "Unassigned",
-    "status": "assigned",
+    "status": "active",
     "user": "unallocated",
     "country": "Peru",
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
-    "notes": "test assign",
+    "last_sms": "2026-10-01T10:44:37.856Z",
+    "sms_count": 125,
+    "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6683,
@@ -30,16 +25,11 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T14:12:31",
+    "sms_count": 122,
     "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6684,
@@ -51,16 +41,11 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T14:13:09",
+    "sms_count": 149,
     "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6685,
@@ -72,16 +57,11 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T14:24:20",
+    "sms_count": 165,
     "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6686,
@@ -93,16 +73,11 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T14:21:20",
+    "sms_count": 131,
     "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6687,
@@ -118,12 +93,7 @@
     "sms_count": 0,
     "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6688,
@@ -139,12 +109,7 @@
     "sms_count": 0,
     "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6689,
@@ -160,12 +125,7 @@
     "sms_count": 0,
     "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6690,
@@ -181,12 +141,7 @@
     "sms_count": 0,
     "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6691,
@@ -202,12 +157,7 @@
     "sms_count": 0,
     "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6692,
@@ -223,12 +173,7 @@
     "sms_count": 0,
     "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6693,
@@ -244,12 +189,7 @@
     "sms_count": 0,
     "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6694,
@@ -265,12 +205,7 @@
     "sms_count": 0,
     "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6695,
@@ -286,12 +221,7 @@
     "sms_count": 0,
     "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6696,
@@ -307,12 +237,7 @@
     "sms_count": 0,
     "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6697,
@@ -328,12 +253,7 @@
     "sms_count": 0,
     "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6698,
@@ -349,12 +269,7 @@
     "sms_count": 0,
     "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6699,
@@ -370,12 +285,7 @@
     "sms_count": 0,
     "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6700,
@@ -391,12 +301,7 @@
     "sms_count": 0,
     "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6701,
@@ -412,12 +317,7 @@
     "sms_count": 0,
     "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6702,
@@ -433,12 +333,7 @@
     "sms_count": 0,
     "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6703,
@@ -454,12 +349,7 @@
     "sms_count": 0,
     "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6704,
@@ -475,12 +365,7 @@
     "sms_count": 0,
     "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6705,
@@ -496,12 +381,7 @@
     "sms_count": 0,
     "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6706,
@@ -517,12 +397,7 @@
     "sms_count": 0,
     "notes": "",
     "range_id": 1,
-    "range_name": "Peru_KB1",
-    "manager_id": null,
-    "agent_id": null,
-    "client_id": null,
-    "client_name": "",
-    "client_username": ""
+    "range_name": "Peru_KB1"
   },
   {
     "id": 6707,
@@ -1846,8 +1721,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T13:52:10",
+    "sms_count": 2,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -2886,8 +2761,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T14:14:29",
+    "sms_count": 14,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -2902,8 +2777,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T14:16:17",
+    "sms_count": 18,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -2918,8 +2793,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T14:17:54",
+    "sms_count": 18,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -2950,8 +2825,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T14:19:28",
+    "sms_count": 16,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -3318,8 +3193,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T13:57:29",
+    "sms_count": 2,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -4102,8 +3977,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T13:50:46",
+    "sms_count": 16,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -4118,8 +3993,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T13:43:25",
+    "sms_count": 18,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -4134,8 +4009,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T13:51:53",
+    "sms_count": 36,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -4150,8 +4025,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T13:52:41",
+    "sms_count": 22,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -4166,8 +4041,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T13:54:02",
+    "sms_count": 16,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -4182,8 +4057,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T13:55:02",
+    "sms_count": 16,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -4198,8 +4073,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T13:55:54",
+    "sms_count": 18,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -4214,8 +4089,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T13:56:40",
+    "sms_count": 18,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -4262,8 +4137,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T14:24:43",
+    "sms_count": 18,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -4278,8 +4153,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T14:06:41",
+    "sms_count": 16,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -4294,8 +4169,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T14:07:42",
+    "sms_count": 16,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -4310,8 +4185,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T14:11:20",
+    "sms_count": 16,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -4342,8 +4217,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T14:12:33",
+    "sms_count": 16,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -4358,8 +4233,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T14:14:04",
+    "sms_count": 14,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -4374,8 +4249,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T14:14:53",
+    "sms_count": 18,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -4390,8 +4265,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T14:18:39",
+    "sms_count": 18,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -4406,8 +4281,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T14:19:31",
+    "sms_count": 14,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -4438,8 +4313,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T14:20:30",
+    "sms_count": 12,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -4454,8 +4329,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T14:21:24",
+    "sms_count": 18,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -8118,8 +7993,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T14:01:46",
+    "sms_count": 14,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -8150,8 +8025,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.521Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T14:10:31",
+    "sms_count": 25,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -10470,8 +10345,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.522Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T13:49:03",
+    "sms_count": 18,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -10486,8 +10361,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.522Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T13:51:11",
+    "sms_count": 16,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -10502,8 +10377,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.522Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T13:52:51",
+    "sms_count": 18,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -10534,8 +10409,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.522Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T13:54:44",
+    "sms_count": 14,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -10550,8 +10425,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.522Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T13:56:13",
+    "sms_count": 18,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -10566,8 +10441,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.522Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T13:58:08",
+    "sms_count": 18,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -10582,8 +10457,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.522Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T13:59:21",
+    "sms_count": 18,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -10598,8 +10473,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.522Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T14:01:04",
+    "sms_count": 12,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -10614,8 +10489,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.522Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T14:02:18",
+    "sms_count": 16,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"
@@ -10630,8 +10505,8 @@
     "provider": "Manual",
     "otp_limit": 10,
     "allocated_at": "2026-09-26T15:23:47.522Z",
-    "last_sms": null,
-    "sms_count": 0,
+    "last_sms": "2026-09-27T14:04:18",
+    "sms_count": 2,
     "notes": "",
     "range_id": 1,
     "range_name": "Peru_KB1"

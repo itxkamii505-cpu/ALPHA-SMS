@@ -225,8 +225,8 @@ function buildSortableNumbersTable(numbersData, rangeInfoFor, rateInfoFor, opts 
                         : (n.agent_payout != null ? n.agent_payout : (n.client_payout != null ? n.client_payout : null));
     return {
       n,
-      range: rInfo?.range_name || `${n.country || ''}-${n.provider || ''}`,
-      prefix: rInfo?.prefix || '—',
+      range: n.range_name || n.range_label || n.range || rInfo?.range_name || rInfo?.name || (n.country && n.provider && n.provider !== 'Manual' ? `${n.country} - ${n.provider}` : (n.country || '—')),
+      prefix: rInfo?.prefix || n.prefix || '—',
       number: n.number || '',
       my_payout: resolvedRate,
       range_term: rInfo?.payout_schedule || null,
@@ -515,9 +515,9 @@ async function pgDashboard() {
 
     // ── SMS Daily Stats (Real-time) ──
     const todaySms = dailyStats?.today || 0;
-    const yesterdaySms = dailyStats?.yesterday || 0;
     const thisWeekSms = dailyStats?.this_week || 0;
     const thisMonthSms = dailyStats?.this_month || 0;
+    const thisYearSms = dailyStats?.this_year || dailyStats?.all_time || 0;
 
     // ── Traffic data for chart ──
     const trafficData = dailyStats?.weekly_traffic || Array.from({ length: 7 }, () => 0);
@@ -553,10 +553,10 @@ async function pgDashboard() {
 
       <!-- SMS Stats Grid - 4 Cards (Top Row) -->
       <div class="stats-grid" style="grid-template-columns:1fr;margin-bottom:24px;">
-        ${statCard('TODAY\'S SMS', 'fas fa-calendar-day', todaySms, 'green', 'Today')}
-        ${statCard('YESTERDAY', 'fas fa-calendar-day', yesterdaySms, 'yellow', 'Yesterday')}
-        ${statCard('SMS THIS WEEK', 'fas fa-calendar-week', thisWeekSms, 'blue', 'This week')}
-        ${statCard('THIS MONTH', 'fas fa-calendar-alt', thisMonthSms, 'purple', 'This month')}
+        ${statCard('TODAY\'S SMS', 'fas fa-calendar-day', todaySms, 'green', 'Daily')}
+        ${statCard('SMS THIS WEEK', 'fas fa-calendar-week', thisWeekSms, 'blue', 'Weekly')}
+        ${statCard('THIS MONTH', 'fas fa-calendar-alt', thisMonthSms, 'purple', 'Monthly')}
+        ${statCard('THIS YEAR', 'fas fa-calendar-check', thisYearSms, 'cyan', 'Yearly')}
       </div>
 
       <!-- Chart Section (Middle) -->
@@ -855,9 +855,18 @@ async function pgMySmsNumbers(page = 1) {
     const rateLookup = {};
     rateCard.forEach(r => { rateLookup[`${r.country}|${r.provider}`] = r; });
     const rangeLookup = {};
-    ranges.forEach(r => { rangeLookup[`${r.country}|${r.provider}`] = r; });
+    const rangeById = {};
+    const rangeByName = {};
+    ranges.forEach(r => {
+      if (r.id) rangeById[r.id] = r;
+      if (r.range_name) rangeByName[r.range_name] = r;
+      if (r.name) rangeByName[r.name] = r;
+      rangeLookup[`${r.country}|${r.provider}`] = r;
+    });
 
     function rangeInfoFor(n) {
+      if (n.range_id && rangeById[n.range_id]) return rangeById[n.range_id];
+      if (n.range_name && rangeByName[n.range_name]) return rangeByName[n.range_name];
       return rangeLookup[`${n.country}|${n.provider}`] || null;
     }
     function rateInfoFor(n) {
@@ -877,7 +886,11 @@ async function pgMySmsNumbers(page = 1) {
         <div class="filters-bar" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
           <select id="sms-range-filter" onchange="applySmsFilters()" style="min-width:160px;">
             <option value="">Select Range</option>
-            ${ranges.map(r => `<option value="${r.id}" ${rangeFilter == r.id ? 'selected' : ''}>${r.country || ''} ${r.prefix || ''}</option>`).join('')}
+            ${ranges.map(r => {
+              const rName = r.range_name || r.name || r.country || 'Range';
+              const extra = r.country && r.country !== rName ? ` (${r.country}${r.prefix ? ` ${r.prefix}` : ''})` : (r.prefix ? ` (${r.prefix})` : '');
+              return `<option value="${r.id}" ${rangeFilter == r.id ? 'selected' : ''}>${rName}${extra}</option>`;
+            }).join('')}
           </select>
           ${zySelectSearch('sms-client-filter', 'Search clients…')}
           <select id="sms-client-filter" onchange="applySmsFilters()" style="min-width:150px;">
@@ -1330,7 +1343,11 @@ async function pgSmsTestPanel() {
           <div class="filters-bar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
             <select id="ag-tp-range" style="min-width:150px;" onchange="agTpPage=1;loadAgTestNumbers()">
               <option value="">Select Range</option>
-              ${ranges.map(r => `<option value="${r.id}">${r.country || ''} ${r.prefix || ''}</option>`).join('')}
+              ${ranges.map(r => {
+                const rName = r.range_name || r.name || r.country || 'Range';
+                const extra = r.country && r.country !== rName ? ` (${r.country}${r.prefix ? ` ${r.prefix}` : ''})` : (r.prefix ? ` (${r.prefix})` : '');
+                return `<option value="${r.id}">${rName}${extra}</option>`;
+              }).join('')}
             </select>
             <button class="btn btn-outline btn-sm" onclick="agTpPage=1;loadAgTestNumbers()"><i class="fas fa-filter"></i> Filter</button>
           </div>
@@ -2181,11 +2198,17 @@ async function pgDetailedSms(page = 1) {
       </div>
       <div class="card">
         <div class="filters-bar" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <input type="date" id="cdr-from" value="${dateFrom}">
-          <input type="date" id="cdr-to" value="${dateTo}">
+          <label style="font-size:12px;font-weight:600;color:var(--text-muted);">From:</label>
+          <input type="date" id="cdr-from" value="${dateFrom}" style="min-width:130px;cursor:pointer;">
+          <label style="font-size:12px;font-weight:600;color:var(--text-muted);">To:</label>
+          <input type="date" id="cdr-to" value="${dateTo}" style="min-width:130px;cursor:pointer;">
           <select id="cdr-range" style="min-width:140px;">
             <option value="">Filter Range</option>
-            ${rangesList.map(r => `<option value="${r.id}" ${rangeFilter == r.id ? 'selected' : ''}>${r.country || ''} ${r.prefix || ''}</option>`).join('')}
+            ${rangesList.map(r => {
+              const rName = r.range_name || r.name || r.country || 'Range';
+              const extra = r.country && r.country !== rName ? ` (${r.country}${r.prefix ? ` ${r.prefix}` : ''})` : (r.prefix ? ` (${r.prefix})` : '');
+              return `<option value="${r.id}" ${rangeFilter == r.id ? 'selected' : ''}>${rName}${extra}</option>`;
+            }).join('')}
           </select>
           <input id="cdr-num" placeholder="Search Number or Message" value="${numSearch}">
           <input id="cdr-cli" placeholder="Search CLI" value="${cliSearch}">
@@ -2194,10 +2217,10 @@ async function pgDetailedSms(page = 1) {
           <span style="font-size:12px;color:var(--text-muted);font-weight:600;">Group By:</span>
           ${['date','month','range','client','number','cli'].map(g => `
             <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;">
-              <input type="radio" name="cdr-group" value="${g}" ${cdrGroupBy === g ? 'checked' : ''} onchange="cdrGroupBy=this.value;pgDetailedSms(1)"> ${g.charAt(0).toUpperCase()+g.slice(1)}
+              <input type="radio" name="cdr-group" value="${g}" ${cdrGroupBy === g ? 'checked' : ''} onchange="cdrGroupBy=this.value"> ${g.charAt(0).toUpperCase()+g.slice(1)}
             </label>`).join('')}
           <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;">
-            <input type="radio" name="cdr-group" value="" ${cdrGroupBy === '' ? 'checked' : ''} onchange="cdrGroupBy='';pgDetailedSms(1)"> None
+            <input type="radio" name="cdr-group" value="" ${cdrGroupBy === '' ? 'checked' : ''} onchange="cdrGroupBy=''"> None
           </label>
           <div style="margin-left:auto;display:flex;gap:8px;">
             <button class="btn btn-warning btn-sm" onclick="exportCDR()"><i class="fas fa-download"></i> Export Report</button>
@@ -2238,7 +2261,7 @@ async function pgDetailedSms(page = 1) {
             const rInfo = rangeLookup[`${s.country}|${s.provider}`];
             return [
               fmtShort(s.timestamp),
-              rInfo?.range_name || `${s.country || ''}-${s.provider || ''}`,
+              s.range_name || s.range_label || s.range || rInfo?.range_name || rInfo?.name || s.country || '—',
               `<span class="monospace">${s.number || '—'}</span>`,
               s.cli || '—',
               `<span class="text-muted">${s.message || '—'}</span>`,
@@ -3051,6 +3074,10 @@ async function deleteAgentAnnouncement(id) {
 
 // ── PROFILE ───────────────────────────────────────────────────────
 function pgProfile() {
+  if (window.SpeedProfile) {
+    window.SpeedProfile.render('page-content');
+    return;
+  }
   const content = document.getElementById('page-content');
   content.innerHTML = `
     <div class="page-header"><div><div class="page-title">My Profile</div></div></div>

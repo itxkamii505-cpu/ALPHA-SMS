@@ -52,14 +52,18 @@ async function pgMySms() {
   zyCrumb(['CDR & Statistics', 'Detailed Reports']);
   c.innerHTML = `<div class="zy-intro">Detailed records of every inbound SMS.</div>
     <div class="zy-filterbox">
-      <input class="zy-fb-input" id="rp-from" value="${zyToday()} 00:00:00">
-      <input class="zy-fb-input" id="rp-to" value="${zyToday()} 23:59:59">
-      <select class="zy-fb-input" id="rp-range"><option value="">Filter Range</option></select>
-      <input class="zy-fb-input" id="rp-num" placeholder="Search Number">
-      <input class="zy-fb-input" id="rp-cli" placeholder="Search CLI">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <label style="font-size:12px;font-weight:700;color:var(--text-secondary,#64748b);">From Date:</label>
+        <input type="date" class="zy-fb-input" id="rp-from" value="${zyToday()}" style="cursor:pointer;padding:6px 10px;font-weight:600;min-width:130px;">
+        <label style="font-size:12px;font-weight:700;color:var(--text-secondary,#64748b);">To Date:</label>
+        <input type="date" class="zy-fb-input" id="rp-to" value="${zyToday()}" style="cursor:pointer;padding:6px 10px;font-weight:600;min-width:130px;">
+        <select class="zy-fb-input" id="rp-range"><option value="">Filter Range</option></select>
+        <input class="zy-fb-input" id="rp-num" placeholder="Search Number">
+        <input class="zy-fb-input" id="rp-cli" placeholder="Search CLI">
+      </div>
       <div class="zy-groupby"><b>Group By :</b>
         ${['Number', 'CLI', 'Hour', 'Day', 'Month', 'Range', 'Currency', 'Status'].map(g =>
-          `<label><input type="checkbox" class="grp-chk" value="${g.toLowerCase()}" onchange="pgMySmsLoad()"> ${g}</label>`).join('')}
+          `<label><input type="checkbox" class="grp-chk" value="${g.toLowerCase()}"> ${g}</label>`).join('')}
       </div>
       <div class="zy-fb-btns">
         <button class="zy-btn-orange" onclick="zy2Export('dt-cdr','csv')">Export Report</button>
@@ -67,13 +71,12 @@ async function pgMySms() {
       </div>
     </div>
     <div class="zy-panel"><div class="zy-panel-head">CDR REPORTS &amp; STATS</div>
-      <div class="zy-panel-body" id="rp-body"><div class="zy-loading">Loading…</div></div></div>`;
+      <div class="zy-panel-body" id="rp-body"><div class="zy-empty" style="padding:40px;text-align:center;color:var(--text-muted,#64748b);"><i class="fas fa-chart-bar" style="font-size:32px;margin-bottom:12px;display:block;opacity:0.6;"></i>Select filters above and click <b>Show Report</b> to view SMS stats.</div></div></div>`;
   const ranges = zyList(await apiFetch('/api/numbers/sms-ranges'));
   ZY_RANGES = ranges;
   const rEl = document.getElementById('rp-range');
   if (rEl) rEl.innerHTML = `<option value="">Filter Range</option>` +
     ranges.map(r => `<option value="${r.id}">${zyEsc(r.name || r.country || '')}</option>`).join('');
-  pgMySmsLoad();
 }
 
 async function pgMySmsLoad() {

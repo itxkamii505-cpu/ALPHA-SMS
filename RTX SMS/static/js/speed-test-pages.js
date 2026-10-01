@@ -51,14 +51,18 @@ async function pgTestCdrStats() {
   const today = new Date().toISOString().slice(0, 10);
   c.innerHTML = `<div class="zy-intro">Here You can view all the sms stats.</div>
     <div class="zy-filterbox">
-      <input class="zy-fb-input" id="tc-from" value="${today} 00:00:00">
-      <input class="zy-fb-input" id="tc-to" value="${today} 23:59:59">
-      <select class="zy-fb-input" id="tc-range"><option value="">Filter Range</option></select>
-      <input class="zy-fb-input" id="tc-num" placeholder="Search Number">
-      <input class="zy-fb-input" id="tc-cli" placeholder="Search CLI">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <label style="font-size:12px;font-weight:700;color:var(--text-secondary,#64748b);">From Date:</label>
+        <input type="date" class="zy-fb-input" id="tc-from" value="${today}" style="cursor:pointer;padding:6px 10px;font-weight:600;min-width:130px;">
+        <label style="font-size:12px;font-weight:700;color:var(--text-secondary,#64748b);">To Date:</label>
+        <input type="date" class="zy-fb-input" id="tc-to" value="${today}" style="cursor:pointer;padding:6px 10px;font-weight:600;min-width:130px;">
+        <select class="zy-fb-input" id="tc-range"><option value="">Filter Range</option></select>
+        <input class="zy-fb-input" id="tc-num" placeholder="Search Number">
+        <input class="zy-fb-input" id="tc-cli" placeholder="Search CLI">
+      </div>
       <div class="zy-groupby"><b>Group By :</b>
         ${['Date', 'Month', 'Range', 'Number', 'CLI'].map(g =>
-          `<label><input type="checkbox" class="grp-chk" value="${g.toLowerCase()}" onchange="pgTestCdrStatsLoad()"> ${g}</label>`).join('')}
+          `<label><input type="checkbox" class="grp-chk" value="${g.toLowerCase()}"> ${g}</label>`).join('')}
       </div>
       <div class="zy-fb-btns">
         <button class="zy-btn-orange" onclick="zy2Export('dt-testcdr','csv')">Export Report</button>

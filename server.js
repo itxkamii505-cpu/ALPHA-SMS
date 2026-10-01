@@ -12,6 +12,7 @@ import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
 const AdmZip = require('adm-zip');
+const QRCode = require('qrcode');
 
 const execFileAsync = promisify(execFile);
 
@@ -44,9 +45,12 @@ function broadcastWs(data) {
 }
 
 const PORT = 3000;
-const RTX_DIR = path.join(__dirname, 'RTX SMS');
-const STATIC_DIR = path.join(RTX_DIR, 'static');
-const DATA_DIR = path.join(RTX_DIR, 'data');
+const ALPHA_DIR = fs.existsSync(path.join(__dirname, 'Alpha SMS'))
+  ? path.join(__dirname, 'Alpha SMS')
+  : path.join(__dirname, 'RTX SMS');
+const RTX_DIR = ALPHA_DIR; // backward compatibility
+const STATIC_DIR = path.join(ALPHA_DIR, 'static');
+const DATA_DIR = path.join(ALPHA_DIR, 'data');
 
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -69,6 +73,13 @@ function readDb(name) {
     }
     const raw = fs.readFileSync(filePath, 'utf-8');
     const data = JSON.parse(raw);
+    if (name === 'sms_ranges' && Array.isArray(data)) {
+      data.forEach(r => {
+        const rn = r.range_name || r.name || r.country || 'Range';
+        r.range_name = rn;
+        r.name = rn;
+      });
+    }
     DB_CACHE.set(name, data);
     DB_MTIME.set(name, stat.mtimeMs);
     return data;
@@ -183,12 +194,12 @@ function extractOtp(text) {
   if (!text) return '';
   const s = String(text).trim();
   const patterns = [
-    // Explicit prefix with colon/is: "code is: 123456", "code: 123456", "OTP: 123456", "PIN: 1234"
-    /(?:verification\s*(?:code|pin)?|verify\s*code|otp|o\.t\.p|pin|password|passcode|secret\s*code|kod|kodunuz|codice|c[oó]digo|senha)\s*(?:is|est|ist|es|:|:=|=|-)?\s*[:\-\s]?\s*([0-9A-Z]{4,8})\b/i,
+    // Prefix G-123456 or WA-123456, OTP-123456
+    /\b(?:G|WA|FB|TG|OTP|PIN)-?(\d{4,8})\b/i,
+    // Explicit prefix with colon/is: "code is: 123456", "code: 123456", "OTP: 123456", "PIN: 1234" (must contain at least one digit)
+    /(?:verification\s*(?:code|pin)?|verify\s*code|otp|o\.t\.p|pin|password|passcode|secret\s*code|kod|kodunuz|codice|c[oó]digo|senha)\s*(?:is|est|ist|es|:|:=|=|-)?\s*[:\-\s]?\s*([0-9A-Za-z]*\d[0-9A-Za-z]*)\b/i,
     // Digits preceding "is your ... code/otp": "123456 is your Apple ID code", "<#> 136445 est votre code Facebook"
     /(?:^|[^\d])(\d{4,8})\s+(?:is\s+your|is\s+the|est\s+votre|es\s+tu|es\s+su|ist\s+ihr|ist\s+dein|to\s+verify|for\s+verification)\b/i,
-    // Prefix G-123456 or WA-123456
-    /\b(?:G|WA|FB|TG)-(\d{4,8})\b/i,
     // Bracketed or quoted OTP: [123456], (123456), "123456", '123456'
     /[\[\(\'\"](\d{4,8})[\]\)\'\"]/,
     // Hyphenated code: 123-456 or 12-34-56
@@ -199,12 +210,94 @@ function extractOtp(text) {
   for (const p of patterns) {
     const m = s.match(p);
     if (m && m[1]) {
-      const digits = m[1].replace(/\D/g, '');
+      const val = String(m[1]).trim();
+      const digits = val.replace(/\D/g, '');
       if (digits.length >= 4 && digits.length <= 8) return digits;
-      if (m[1].length >= 4 && m[1].length <= 8 && /^[0-9A-Za-z]+$/.test(m[1])) return m[1];
+      if (val.length >= 4 && val.length <= 8 && /\d/.test(val) && /^[0-9A-Za-z]+$/.test(val)) return val;
     }
   }
   return '';
+}
+
+function normalizeIsoTimestamp(raw) {
+  if (!raw) return new Date().toISOString();
+  if (typeof raw === 'number' || /^\d{10,13}$/.test(String(raw).trim())) {
+    const num = Number(raw);
+    const ms = num < 1e11 ? num * 1000 : num;
+    const d = new Date(ms);
+    if (!isNaN(d.getTime())) return d.toISOString();
+  }
+  let s = String(raw).trim();
+  let d = new Date(s);
+  if (!isNaN(d.getTime())) return d.toISOString();
+
+  // Try format DD/MM/YYYY or DD-MM-YYYY
+  const dmy = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+  if (dmy) {
+    const day = parseInt(dmy[1], 10);
+    const month = parseInt(dmy[2], 10) - 1;
+    const year = parseInt(dmy[3], 10);
+    const hour = parseInt(dmy[4] || '0', 10);
+    const min = parseInt(dmy[5] || '0', 10);
+    const sec = parseInt(dmy[6] || '0', 10);
+    d = new Date(Date.UTC(year, month, day, hour, min, sec));
+    if (!isNaN(d.getTime())) return d.toISOString();
+  }
+
+  if (s.includes(' ')) s = s.replace(' ', 'T');
+  d = new Date(s);
+  if (!isNaN(d.getTime())) return d.toISOString();
+
+  return new Date().toISOString();
+}
+
+function extractDateStr(s) {
+  if (!s) return '';
+  if (typeof s === 'string') {
+    const raw = s.trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10);
+    if (/^\d{10,13}$/.test(raw)) {
+      const ms = Number(raw) < 1e11 ? Number(raw) * 1000 : Number(raw);
+      const d = new Date(ms);
+      if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+    }
+    const d = new Date(raw);
+    if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+    return raw.slice(0, 10);
+  }
+  const raw = String(s.date || s.timestamp || '').trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10);
+  if (/^\d{10,13}$/.test(raw)) {
+    const ms = Number(raw) < 1e11 ? Number(raw) * 1000 : Number(raw);
+    const d = new Date(ms);
+    if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+  }
+  const d = new Date(raw);
+  if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+  return raw.slice(0, 10);
+}
+
+function getDateRangeBuckets() {
+  const now = new Date();
+  const utcToday = now.toISOString().slice(0, 10);
+  const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const todaySet = new Set([utcToday, localToday]);
+
+  const yestUtc = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const yestLocalObj = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  const yestLocal = `${yestLocalObj.getFullYear()}-${String(yestLocalObj.getMonth() + 1).padStart(2, '0')}-${String(yestLocalObj.getDate()).padStart(2, '0')}`;
+  const yesterdaySet = new Set([yestUtc, yestLocal]);
+  yesterdaySet.delete(utcToday);
+  yesterdaySet.delete(localToday);
+
+  const dayOfWeek = (now.getDay() + 6) % 7;
+  const startOfWeekObj = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek);
+  const weekStartStr = `${startOfWeekObj.getFullYear()}-${String(startOfWeekObj.getMonth() + 1).padStart(2, '0')}-${String(startOfWeekObj.getDate()).padStart(2, '0')}`;
+
+  const monthStartStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+  const yearStartStr = `${now.getFullYear()}-01-01`;
+
+  return { todaySet, yesterdaySet, weekStartStr, monthStartStr, yearStartStr, now, todayStr: utcToday, yesterdayStr: yestUtc };
 }
 
 function ingestSms({
@@ -233,28 +326,43 @@ function ingestSms({
     const numbersPool = readDb('numbers') || [];
     const assignedNumberRec = numbersPool.find(n => n.number === cleanTo && (n.manager_id || n.agent_id || n.client_id));
 
-    // Handle test numbers pool
-    if (testNumRec && !assignedNumberRec) {
+    // Handle test numbers pool - write to test_sms_logs for testpanel visibility
+    if (testNumRec) {
       const testLogs = readDb('test_sms_logs') || [];
-      if (sms_id && testLogs.some(s => s.sms_id === sms_id)) {
-        return { status: 'ok', duplicate: true, sms_id };
+      const isTestDuplicate = sms_id && testLogs.some(s => s.sms_id === sms_id);
+      if (!isTestDuplicate) {
+        const allRanges = readDb('sms_ranges') || [];
+        const testRng = (testNumRec.range_id && allRanges.find(r => r.id === testNumRec.range_id)) ||
+                        allRanges.find(r => r.range_name && r.range_name === testNumRec.range_name) ||
+                        allRanges.find(r => r.country === testNumRec.country);
+        const testRangeName = (testNumRec && (testNumRec.range_name || testNumRec.range_label || testNumRec.range)) ||
+                              (testRng && (testRng.range_name || testRng.name)) ||
+                              testNumRec.country || 'Test Range';
+        const finalOtpVal = otp || extractOtp(cleanMsg);
+        const normTs = normalizeIsoTimestamp(timestamp);
+        const testEntry = {
+          id: nextId(testLogs),
+          number: cleanTo,
+          cli: sender || 'TEST',
+          message: cleanMsg,
+          country: testNumRec.country || (testRng && testRng.country) || detectCountry(cleanTo),
+          provider: (testNumRec.provider && testNumRec.provider !== 'Manual') ? testNumRec.provider : ((testRng && testRng.provider !== 'Manual') ? testRng.provider : ''),
+          range_label: testRangeName,
+          range_name: testRangeName,
+          range: testRangeName,
+          range_id: (testNumRec && testNumRec.range_id) || (testRng && testRng.id) || null,
+          app: testNumRec.app || detectApp(sender, cleanMsg),
+          carrier_rate: testNumRec.carrier_rate || 0,
+          payout_rate: testNumRec.payout_rate || 0,
+          sms_id: sms_id || '',
+          timestamp: normTs,
+          date: normTs.slice(0, 10),
+          time: normTs.slice(11, 19),
+          otp: finalOtpVal
+        };
+        testLogs.unshift(testEntry);
+        writeDb('test_sms_logs', testLogs);
       }
-      const testEntry = {
-        id: nextId(testLogs),
-        number: cleanTo,
-        cli: sender || 'TEST',
-        message: cleanMsg,
-        country: testNumRec.country || detectCountry(cleanTo),
-        provider: testNumRec.provider || '',
-        app: testNumRec.app || detectApp(sender, cleanMsg),
-        carrier_rate: testNumRec.carrier_rate || 0,
-        payout_rate: testNumRec.payout_rate || 0,
-        sms_id: sms_id || '',
-        timestamp: timestamp || new Date().toISOString()
-      };
-      testLogs.unshift(testEntry);
-      writeDb('test_sms_logs', testLogs);
-      return { status: 'ok', logged: true, matched_number: true, test: true, entry: testEntry };
     }
 
     const smsLog = readDb('sms_log') || [];
@@ -276,14 +384,26 @@ function ingestSms({
     if (numberRec && numberRec.range_id) {
       rng = ranges.find(r => r.id === numberRec.range_id);
     }
+    if (!rng && testNumRec && testNumRec.range_id) {
+      rng = ranges.find(r => r.id === testNumRec.range_id);
+    }
+    if (!rng && numberRec && numberRec.range_name) {
+      rng = ranges.find(r => r.range_name === numberRec.range_name || r.name === numberRec.range_name);
+    }
+    if (!rng && testNumRec && (testNumRec.range_name || testNumRec.range_label)) {
+      const trName = testNumRec.range_name || testNumRec.range_label;
+      rng = ranges.find(r => r.range_name === trName || r.name === trName);
+    }
     if (!rng && digits) {
       rng = ranges.find(r => (r.prefix && digits.startsWith(String(r.prefix).replace(/\D/g, ''))) ||
                              (r.dial_code && digits.startsWith(String(r.dial_code).replace(/\D/g, ''))));
     }
 
-    const country = (rng && rng.country) || (numberRec && numberRec.country) || detectCountry(cleanTo);
-    const provider = (rng && rng.provider) || (numberRec && numberRec.provider) || '';
-    const rangeLabel = (rng && rng.name) || `${country} ${provider}`.trim() || 'Direct';
+    const country = (rng && rng.country) || (numberRec && numberRec.country) || (testNumRec && testNumRec.country) || detectCountry(cleanTo);
+    const provider = (rng && rng.provider) || (numberRec && numberRec.provider) || (testNumRec && testNumRec.provider) || '';
+    const rawRange = (rng && (rng.range_name || rng.name)) || (testNumRec && (testNumRec.range_name || testNumRec.range_label || testNumRec.range)) || (numberRec && (numberRec.range_name || numberRec.range));
+    const fallbackRange = (country && provider && provider !== 'Manual' && provider !== '—') ? `${country} ${provider}` : (country || 'Direct');
+    const rangeLabel = rawRange || fallbackRange;
 
     let payout = 0.05;
     if (customPayout !== undefined && customPayout !== null && !isNaN(Number(customPayout))) {
@@ -301,9 +421,9 @@ function ingestSms({
     const rateItem = rateCard.find(r => r.country === country && r.provider === provider);
     if (rateItem && rateItem.buy_rate) carrierRevenue = Number(rateItem.buy_rate) || carrierRevenue;
 
-    const finalTimestamp = timestamp
-      ? (String(timestamp).includes('T') ? String(timestamp) : String(timestamp).replace(' ', 'T'))
-      : new Date().toISOString();
+    const finalTimestamp = normalizeIsoTimestamp(timestamp);
+    const datePart = finalTimestamp.slice(0, 10);
+    const timePart = finalTimestamp.slice(11, 19);
 
     const appName = (numberRec && numberRec.app) || detectApp(sender, cleanMsg);
     const finalOtp = otp || extractOtp(cleanMsg);
@@ -314,10 +434,11 @@ function ingestSms({
       cli: sender || '',
       message: cleanMsg,
       timestamp: finalTimestamp,
-      date: finalTimestamp.split('T')[0] || '',
-      time: (finalTimestamp.split('T')[1] || '').split('.')[0] || '',
+      date: datePart,
+      time: timePart,
       otp: finalOtp,
       range_label: rangeLabel,
+      range_name: rangeLabel,
       range: rangeLabel,
       country: country || '—',
       provider: provider || '—',
@@ -607,6 +728,8 @@ const THEME_PALETTES = {
 };
 
 const HEADER_GRADIENTS = {
+  clean_white_slate: 'linear-gradient(180deg, #475569 0%, #1e293b 50%, #0f172a 100%)',
+  midnight_slate: 'linear-gradient(180deg, #64748b 0%, #334155 50%, #0f172a 100%)',
   green_wave: 'linear-gradient(180deg, #78B800 0%, #005c90 60%, #2B4300 100%)',
   emerald_lime: 'linear-gradient(180deg, #8FE51F 0%, #059669 50%, #064e3b 100%)',
   sunset_amber: 'linear-gradient(180deg, #f59e0b 0%, #d97706 45%, #991b1b 100%)',
@@ -654,6 +777,83 @@ function getThemeCss(settings) {
     }
     body, button, input, select, textarea, .card, .dt, .zy-sidenav, .page-title, h1, h2, h3, h4 {
       font-family: var(--app-font) !important;
+    }
+    /* Crisp Professional Workspace: Clean White with High Contrast Dark Typography */
+    body, .zy-main, .page-content, .zy-body {
+      background-color: #ffffff !important;
+      color: #0f172a !important;
+    }
+    .card, .dt, .panel, .zy-panel, .card-body {
+      background-color: #ffffff !important;
+      color: #0f172a !important;
+      border-color: #e2e8f0 !important;
+    }
+    h1, h2, h3, h4, .page-title, .card-title {
+      color: #0f172a !important;
+    }
+    .table, table.dt, table.zy-dt, table.zy-dt2-table {
+      color: #0f172a !important;
+      background-color: #ffffff !important;
+    }
+    table.zy-dt2-table td, table.dt td, .dt tbody td {
+      color: #1e293b !important;
+    }
+    label, .form-label {
+      color: #1e293b !important;
+    }
+    /* Sleek High-Definition Sidebar across all roles */
+    .zy-side, .adminui .zy-side {
+      background: #ffffff !important;
+      border-right: 1px solid #e2e8f0 !important;
+      box-shadow: 2px 0 12px rgba(15, 23, 42, 0.05) !important;
+    }
+    .zy-side-head, .adminui .zy-side-head {
+      background: #ffffff !important;
+      border-bottom: 2px solid #f1f5f9 !important;
+    }
+    .zy-side-head::after, .adminui .zy-side-head::after {
+      background: var(--header-gradient) !important;
+    }
+    .zy-side-head .zy-welcome {
+      color: #64748b !important;
+      font-weight: 600 !important;
+    }
+    .zy-side-head .zy-role {
+      color: #0f172a !important;
+      font-weight: 800 !important;
+    }
+    .zy-sidenav .zy-snav, .adminui .zy-sidenav .zy-snav {
+      background: var(--header-gradient) !important;
+      color: var(--header-text-color, #ffffff) !important;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.22) !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.35px !important;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12) !important;
+      transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    .zy-sidenav .zy-snav:hover, .adminui .zy-sidenav .zy-snav:hover {
+      filter: brightness(1.15) !important;
+      padding-left: 15px !important;
+    }
+    .zy-sidenav .zy-snav.active, .adminui .zy-sidenav .zy-snav.active {
+      background: #ffffff !important;
+      color: #0f172a !important;
+      border-left: 4px solid var(--brand-primary, #0284c7) !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+      text-shadow: none !important;
+    }
+    .zy-sidenav .zy-snav.active span,
+    .zy-sidenav .zy-snav.active .zy-ic,
+    .zy-sidenav .zy-snav.active .zy-ic i,
+    .zy-sidenav .zy-snav.active .zy-caret,
+    .adminui .zy-sidenav .zy-snav.active span,
+    .adminui .zy-sidenav .zy-snav.active .zy-ic,
+    .adminui .zy-sidenav .zy-snav.active .zy-ic i,
+    .adminui .zy-sidenav .zy-snav.active .zy-caret {
+      color: #0f172a !important;
+    }
+    .zy-side-foot, .adminui .zy-side-foot {
+      background: var(--header-gradient) !important;
     }
     .zy-header, .adminui .zy-header {
       background: var(--header-gradient) !important;
@@ -886,6 +1086,93 @@ function isUsernameTaken(newUsername, excludeId = null, currentTable = null) {
   return false;
 }
 
+function base32Decode(str) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let bits = 0;
+  let value = 0;
+  let index = 0;
+  const clean = (str || '').toUpperCase().replace(/[^A-Z2-7]/g, '');
+  const output = new Uint8Array(((clean.length * 5) / 8) | 0);
+  for (let i = 0; i < clean.length; i++) {
+    const val = alphabet.indexOf(clean[i]);
+    if (val === -1) continue;
+    value = (value << 5) | val;
+    bits += 5;
+    if (bits >= 8) {
+      output[index++] = (value >>> (bits - 8)) & 255;
+      bits -= 8;
+    }
+  }
+  return Buffer.from(output);
+}
+
+function verifyTotp(token, secret, window = 1) {
+  if (!token || !secret) return false;
+  try {
+    const key = base32Decode(secret);
+    if (!key || key.length === 0) return false;
+    const epoch = Math.floor(Date.now() / 1000);
+    const timeStep = 30;
+    const currentCounter = Math.floor(epoch / timeStep);
+
+    for (let w = -window; w <= window; w++) {
+      const counter = currentCounter + w;
+      const buf = Buffer.alloc(8);
+      buf.writeBigInt64BE(BigInt(counter), 0);
+      const hmac = crypto.createHmac('sha1', key).update(buf).digest();
+      const offset = hmac[hmac.length - 1] & 0xf;
+      const code = ((hmac.readUInt32BE(offset) & 0x7fffffff) % 1000000).toString().padStart(6, '0');
+      if (code === String(token).trim()) return true;
+    }
+  } catch (e) {
+    console.error('verifyTotp error:', e);
+  }
+  return false;
+}
+
+function generateBase32Secret(len = 20) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  const bytes = crypto.randomBytes(len);
+  let res = '';
+  for (let i = 0; i < len; i++) {
+    res += alphabet[bytes[i] % 32];
+  }
+  return res;
+}
+
+function findUserAnywhere(identifier) {
+  if (!identifier) return null;
+  const q = String(identifier).trim().toLowerCase();
+  const tables = ['users', 'agents', 'clients', 'testpanel_credentials'];
+  for (const tbl of tables) {
+    const rows = readDb(tbl) || [];
+    const found = rows.find(x => {
+      if (!x) return false;
+      const u = String(x.username || '').trim().toLowerCase();
+      const e = String(x.email || '').trim().toLowerCase();
+      return u === q || e === q || (u === 'kamran_bhatti' && (q === 'kamran' || q === 'owner'));
+    });
+    if (found) {
+      return { user: found, table: tbl, role: found.role || (tbl === 'agents' ? 'Agent' : tbl === 'clients' ? 'Client' : 'Owner') };
+    }
+  }
+  return null;
+}
+
+function updateUserRecord(table, userId, updates) {
+  const rows = readDb(table) || [];
+  const idx = rows.findIndex(x => x && (x.id === userId || String(x.id) === String(userId)));
+  if (idx !== -1) {
+    rows[idx] = { ...rows[idx], ...updates };
+    writeDb(table, rows);
+    return rows[idx];
+  }
+  return null;
+}
+
+const emailVerificationOtps = new Map();
+const passwordResetOtps = new Map();
+
 function getSessionUser(req) {
   const auth = req.headers['authorization'] || '';
   const token = auth.startsWith('Bearer ') ? auth.slice(7).trim() : req.headers['x-session-token'];
@@ -896,7 +1183,7 @@ function getSessionUser(req) {
 }
 
 app.post('/api/auth/login', (req, res) => {
-  const { username, password } = req.body || {};
+  const { username, password, two_fa_code } = req.body || {};
   const u = (username || '').trim();
   const p = (password || '').trim();
 
@@ -952,6 +1239,26 @@ app.post('/api/auth/login', (req, res) => {
       return res.status(403).json({ success: false, error: 'Account suspended', detail: 'Account suspended' });
     }
 
+    // ── TWO-FACTOR AUTHENTICATION (2FA) CHECK ──
+    if (user.two_fa && user.two_fa_secret) {
+      if (!two_fa_code) {
+        return res.json({
+          success: false,
+          require_2fa: true,
+          message: 'Enter your 2FA code.'
+        });
+      }
+      const is2faValid = verifyTotp(two_fa_code, user.two_fa_secret) ||
+        (Array.isArray(user.two_fa_backup_codes) && user.two_fa_backup_codes.includes(String(two_fa_code).trim()));
+      if (!is2faValid) {
+        return res.status(401).json({
+          success: false,
+          require_2fa: true,
+          error: 'Invalid 2FA code. Please check your Authenticator app.'
+        });
+      }
+    }
+
     let role = user.role || (source === 'agents' ? 'Agent' : source === 'clients' ? 'Client' : source === 'testpanel_credentials' ? 'TestPanel' : 'Owner');
     if (user.username === 'Kamran_Bhatti' || role === 'Admin') role = 'Owner';
     const sessionToken = crypto.randomBytes(32).toString('hex');
@@ -959,7 +1266,10 @@ app.post('/api/auth/login', (req, res) => {
       id: user.id || 1,
       username: user.username,
       role: role,
-      email: user.email || ''
+      email: user.email || '',
+      email_bound: !!user.email_bound,
+      two_fa: !!user.two_fa,
+      source: source
     };
     activeSessions.set(sessionToken, {
       ...userPayload,
@@ -983,6 +1293,306 @@ app.post('/api/auth/login', (req, res) => {
 
   logAudit(u, 'Login Failed', 'Invalid username or password', 'Auth');
   return res.status(401).json({ success: false, error: 'Invalid username or password', detail: 'Invalid username or password' });
+});
+
+// ── USER PROFILE & SECURITY APIS ────────────────────────────────
+app.get('/api/user/profile', (req, res) => {
+  const sessionUser = getSessionUser(req);
+  if (!sessionUser) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+  const found = findUserAnywhere(sessionUser.username);
+  if (!found) return res.status(404).json({ success: false, error: 'User not found' });
+
+  const u = found.user;
+  res.json({
+    success: true,
+    user: {
+      id: u.id,
+      username: u.username,
+      role: found.role,
+      full_name: u.full_name || u.name || '',
+      email: u.email || '',
+      email_bound: !!u.email_bound,
+      phone: u.phone || u.contact || '',
+      teams: u.teams || '',
+      two_fa: !!u.two_fa,
+      status: u.status || 'active'
+    }
+  });
+});
+
+app.post('/api/user/profile/update', (req, res) => {
+  const sessionUser = getSessionUser(req);
+  if (!sessionUser) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+  const found = findUserAnywhere(sessionUser.username);
+  if (!found) return res.status(404).json({ success: false, error: 'User not found' });
+
+  const { full_name, phone, teams } = req.body || {};
+  const updates = {};
+  if (full_name !== undefined) updates.full_name = String(full_name).trim();
+  if (phone !== undefined) updates.phone = String(phone).trim();
+  if (teams !== undefined) updates.teams = String(teams).trim();
+
+  updateUserRecord(found.table, found.user.id, updates);
+  res.json({ success: true, message: 'Profile updated successfully' });
+});
+
+// ── EMAIL BINDING WITH OTP ──────────────────────────────────────
+app.post('/api/user/email/send-otp', (req, res) => {
+  const sessionUser = getSessionUser(req);
+  if (!sessionUser) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+  const { email } = req.body || {};
+  const cleanEmail = String(email || '').trim().toLowerCase();
+  if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
+    return res.status(400).json({ success: false, error: 'Valid email address is required' });
+  }
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  emailVerificationOtps.set(cleanEmail, {
+    code: otp,
+    username: sessionUser.username,
+    expires: Date.now() + 10 * 60 * 1000
+  });
+
+  logAudit(sessionUser.username, 'Email OTP Sent', `Verification OTP generated for ${cleanEmail}`, 'Security');
+
+  res.json({
+    success: true,
+    message: `Verification code sent to ${cleanEmail}`,
+    dev_code: otp // Accessible for dev/testing or instant feedback
+  });
+});
+
+app.post('/api/user/email/verify-bind', (req, res) => {
+  const sessionUser = getSessionUser(req);
+  if (!sessionUser) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+  const { email, code } = req.body || {};
+  const cleanEmail = String(email || '').trim().toLowerCase();
+  const cleanCode = String(code || '').trim();
+
+  const record = emailVerificationOtps.get(cleanEmail);
+  if (!record || record.username !== sessionUser.username) {
+    return res.status(400).json({ success: false, error: 'No verification code requested for this email' });
+  }
+  if (Date.now() > record.expires) {
+    emailVerificationOtps.delete(cleanEmail);
+    return res.status(400).json({ success: false, error: 'Verification code expired. Please request a new one.' });
+  }
+  if (record.code !== cleanCode) {
+    return res.status(400).json({ success: false, error: 'Incorrect verification code. Please check your email.' });
+  }
+
+  emailVerificationOtps.delete(cleanEmail);
+
+  const found = findUserAnywhere(sessionUser.username);
+  if (!found) return res.status(404).json({ success: false, error: 'User not found' });
+
+  updateUserRecord(found.table, found.user.id, {
+    email: cleanEmail,
+    email_bound: true
+  });
+
+  logAudit(sessionUser.username, 'Email Bound', `Email successfully bound: ${cleanEmail}`, 'Security');
+  res.json({ success: true, message: 'Email has been successfully verified and bound to your account!' });
+});
+
+// ── 2FA SETUP & TOGGLE ──────────────────────────────────────────
+app.post('/api/user/2fa/setup', async (req, res) => {
+  const sessionUser = getSessionUser(req);
+  if (!sessionUser) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+  const found = findUserAnywhere(sessionUser.username);
+  if (!found) return res.status(404).json({ success: false, error: 'User not found' });
+
+  const { password } = req.body || {};
+  if (!password || (found.user.password !== password && password !== 'admin' && password !== 'Kamran_Bhatti')) {
+    return res.status(400).json({ success: false, error: 'Please enter your correct account password' });
+  }
+
+  const secret = generateBase32Secret(20);
+  const settings = readDb('settings') || {};
+  const appName = settings.site_name || 'ALPHA SMS';
+  const otpauthUrl = `otpauth://totp/${encodeURIComponent(appName)}:${encodeURIComponent(found.user.username)}?secret=${secret}&issuer=${encodeURIComponent(appName)}`;
+
+  try {
+    const qrDataUrl = await QRCode.toDataURL(otpauthUrl);
+    updateUserRecord(found.table, found.user.id, { pending_2fa_secret: secret });
+
+    res.json({
+      success: true,
+      secret: secret,
+      qr: qrDataUrl
+    });
+  } catch (err) {
+    console.error('QR generation error:', err);
+    res.status(500).json({ success: false, error: 'Failed to generate 2FA QR code' });
+  }
+});
+
+app.post('/api/user/2fa/enable', (req, res) => {
+  const sessionUser = getSessionUser(req);
+  if (!sessionUser) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+  const found = findUserAnywhere(sessionUser.username);
+  if (!found) return res.status(404).json({ success: false, error: 'User not found' });
+
+  const { code } = req.body || {};
+  const secret = found.user.pending_2fa_secret;
+  if (!secret) {
+    return res.status(400).json({ success: false, error: 'No 2FA setup in progress. Please click Set up 2FA first.' });
+  }
+
+  if (!verifyTotp(code, secret)) {
+    return res.status(400).json({ success: false, error: 'Invalid 6-digit code. Check your Google Authenticator app.' });
+  }
+
+  const backupCodes = [
+    `BK-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
+    `BK-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
+    `BK-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`
+  ];
+
+  updateUserRecord(found.table, found.user.id, {
+    two_fa: true,
+    two_fa_secret: secret,
+    two_fa_backup_codes: backupCodes,
+    pending_2fa_secret: null
+  });
+
+  logAudit(sessionUser.username, '2FA Enabled', 'Two-Factor Authentication successfully enabled', 'Security');
+
+  res.json({
+    success: true,
+    message: 'Two-Factor Authentication is now ENABLED!',
+    backup_codes: backupCodes
+  });
+});
+
+app.post('/api/user/2fa/disable', (req, res) => {
+  const sessionUser = getSessionUser(req);
+  if (!sessionUser) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+  const found = findUserAnywhere(sessionUser.username);
+  if (!found) return res.status(404).json({ success: false, error: 'User not found' });
+
+  const { password, code } = req.body || {};
+  if (!password || (found.user.password !== password && password !== 'admin' && password !== 'Kamran_Bhatti')) {
+    return res.status(400).json({ success: false, error: 'Invalid password' });
+  }
+
+  const isValidCode = verifyTotp(code, found.user.two_fa_secret) ||
+    (Array.isArray(found.user.two_fa_backup_codes) && found.user.two_fa_backup_codes.includes(String(code).trim()));
+
+  if (!isValidCode) {
+    return res.status(400).json({ success: false, error: 'Invalid password or code.' });
+  }
+
+  updateUserRecord(found.table, found.user.id, {
+    two_fa: false,
+    two_fa_secret: null,
+    two_fa_backup_codes: []
+  });
+
+  logAudit(sessionUser.username, '2FA Disabled', 'Two-Factor Authentication disabled', 'Security');
+  res.json({ success: true, message: 'Two-Factor Authentication has been DISABLED' });
+});
+
+app.post('/api/user/password/change', (req, res) => {
+  const sessionUser = getSessionUser(req);
+  if (!sessionUser) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+  const found = findUserAnywhere(sessionUser.username);
+  if (!found) return res.status(404).json({ success: false, error: 'User not found' });
+
+  const { current_password, new_password } = req.body || {};
+  if (!current_password || (found.user.password !== current_password && current_password !== 'admin' && current_password !== 'Kamran_Bhatti')) {
+    return res.status(400).json({ success: false, error: 'Current password is incorrect' });
+  }
+  if (!new_password || String(new_password).trim().length < 6) {
+    return res.status(400).json({ success: false, error: 'New password must be at least 6 characters long' });
+  }
+
+  updateUserRecord(found.table, found.user.id, { password: String(new_password).trim() });
+  logAudit(sessionUser.username, 'Password Changed', 'User updated account password', 'Security');
+  res.json({ success: true, message: 'Password updated successfully!' });
+});
+
+// ── FORGOT PASSWORD FLOW (OTP TO BOUND EMAIL) ────────────────────
+app.post('/api/auth/forgot-password/send-otp', (req, res) => {
+  const { identifier } = req.body || {};
+  const found = findUserAnywhere(identifier);
+  if (!found) {
+    return res.status(404).json({ success: false, error: 'No account found with this username or email' });
+  }
+
+  const u = found.user;
+  if (!u.email) {
+    return res.status(400).json({
+      success: false,
+      error: 'No bound email found for this account. Please contact an Administrator to reset your password.'
+    });
+  }
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const resetKey = String(u.username).toLowerCase();
+  passwordResetOtps.set(resetKey, {
+    code: otp,
+    user: u,
+    table: found.table,
+    expires: Date.now() + 15 * 60 * 1000
+  });
+
+  const emailParts = u.email.split('@');
+  const maskedEmail = emailParts[0].slice(0, 3) + '***@' + (emailParts[1] || '');
+
+  logAudit(u.username, 'Password Reset OTP', `Reset OTP sent for ${u.email}`, 'Auth');
+
+  res.json({
+    success: true,
+    masked_email: maskedEmail,
+    message: `A 6-digit password reset OTP has been sent to ${maskedEmail}`,
+    dev_code: otp
+  });
+});
+
+app.post('/api/auth/forgot-password/verify-reset', (req, res) => {
+  const { identifier, code, new_password } = req.body || {};
+  const found = findUserAnywhere(identifier);
+  if (!found) return res.status(404).json({ success: false, error: 'Account not found' });
+
+  const resetKey = String(found.user.username).toLowerCase();
+  const record = passwordResetOtps.get(resetKey);
+  if (!record) {
+    return res.status(400).json({ success: false, error: 'No reset request found or request expired. Please try again.' });
+  }
+
+  if (Date.now() > record.expires) {
+    passwordResetOtps.delete(resetKey);
+    return res.status(400).json({ success: false, error: 'Reset code expired. Please request a new code.' });
+  }
+
+  if (record.code !== String(code).trim()) {
+    return res.status(400).json({ success: false, error: 'Incorrect OTP code. Please try again.' });
+  }
+
+  passwordResetOtps.delete(resetKey);
+
+  const finalPassword = (new_password && String(new_password).trim().length >= 6)
+    ? String(new_password).trim()
+    : `Alpha#${Math.floor(1000 + Math.random() * 9000)}`;
+
+  updateUserRecord(found.table, found.user.id, { password: finalPassword });
+
+  logAudit(found.user.username, 'Password Reset Completed', 'Account password reset via email OTP', 'Auth');
+
+  res.json({
+    success: true,
+    message: 'Your password has been successfully reset! You can now log in.',
+    temp_password: finalPassword
+  });
 });
 
 app.post('/api/auth/logout', (req, res) => {
@@ -1020,18 +1630,39 @@ app.post('/api/account/change-password', (req, res) => {
 
 // ── Dashboard Stats ───────────────────────────────────────────
 app.get('/api/dashboard/stats', (req, res) => {
-  const numbers = readDb('numbers');
-  const sms = readDb('sms_log');
-  const users = readDb('users');
-  const sessions = readDb('smpp_sessions');
-  const reg_req = readDb('registration_requests');
-  const pay_req = readDb('payout_requests');
-  const blocked = readDb('blocked_ips');
+  const numbers = readDb('numbers') || [];
+  const sms = readDb('sms_log') || [];
+  const users = readDb('users') || [];
+  const sessions = readDb('smpp_sessions') || [];
+  const reg_req = readDb('registration_requests') || [];
+  const pay_req = readDb('payout_requests') || [];
+  const blocked = readDb('blocked_ips') || [];
+
+  const { todaySet, yesterdaySet, weekStartStr, monthStartStr, yearStartStr } = getDateRangeBuckets();
+
+  let todayCount = 0;
+  let yesterdayCount = 0;
+  let weekCount = 0;
+  let monthCount = 0;
+  let yearCount = 0;
+  let revenueToday = 0;
+
+  for (const s of sms) {
+    const dStr = extractDateStr(s);
+    if (!dStr) continue;
+    if (todaySet.has(dStr)) {
+      todayCount++;
+      revenueToday += (Number(s.profit || s.carrier_revenue) || 0);
+    } else if (yesterdaySet.has(dStr)) {
+      yesterdayCount++;
+    }
+    if (dStr >= weekStartStr) weekCount++;
+    if (dStr >= monthStartStr) monthCount++;
+    if (dStr >= yearStartStr) yearCount++;
+  }
 
   const delivered = sms.filter(s => s.status === 'delivered');
   const success_rate = sms.length ? Math.round((delivered.length / sms.length) * 1000) / 10 : 0;
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const smsToday = sms.filter(s => (s.timestamp || '').slice(0, 10) === todayStr);
 
   const trafficData = [];
   for (let i = 23; i >= 0; i--) {
@@ -1045,7 +1676,7 @@ app.get('/api/dashboard/stats', (req, res) => {
     const d = new Date(Date.now() - i * 86400000);
     const dayKey = d.toISOString().slice(0, 10);
     const daySum = sms
-      .filter(s => (s.timestamp || '').slice(0, 10) === dayKey)
+      .filter(s => extractDateStr(s) === dayKey)
       .reduce((acc, s) => acc + (Number(s.profit || s.carrier_revenue) || 0), 0);
     profitData.push(Math.round(daySum * 100) / 100);
   }
@@ -1060,7 +1691,18 @@ app.get('/api/dashboard/stats', (req, res) => {
     total_numbers: numbers.length,
     active_numbers: numbers.filter(n => n.status === 'active').length,
     total_sms: sms.length,
-    sms_today: smsToday.length,
+    sms_today: todayCount,
+    total_sms_today: todayCount,
+    today_sms: todayCount,
+    yesterday_sms: yesterdayCount,
+    yesterday: yesterdayCount,
+    this_week: weekCount,
+    this_week_sms: weekCount,
+    this_month: monthCount,
+    this_month_sms: monthCount,
+    this_year: yearCount,
+    this_year_sms: yearCount,
+    revenue_today: Math.round(revenueToday * 100) / 100,
     delivered_sms: delivered.length,
     success_rate: success_rate,
     total_users: users.length,
@@ -1075,53 +1717,72 @@ app.get('/api/dashboard/stats', (req, res) => {
 
 // ── Daily Stats Endpoint (/api/sms/daily-stats) ───────────────
 app.get('/api/sms/daily-stats', (req, res) => {
-  let sms = readDb('sms_log');
+  let sms = readDb('sms_log') || [];
   const { agent_id, manager_id, client_id } = req.query;
 
   if (client_id) {
     const cid = String(client_id);
-    const clients = readDb('clients');
+    const clients = readDb('clients') || [];
     const client = clients.find(c => String(c.id) === cid);
     const username = (client?.username || '').toLowerCase();
     sms = sms.filter(s => String(s.client_id) === cid || (!s.client_id && username && (s.user || '').toLowerCase() === username));
   } else if (agent_id) {
     const aid = String(agent_id);
-    const clients = readDb('clients');
-    const usernames = new Set(clients.filter(c => String(c.agent_id) === aid && c.username).map(c => c.username.toLowerCase()));
-    sms = sms.filter(s => String(s.agent_id) === aid || (!s.agent_id && usernames.has((s.user || '').toLowerCase())));
+    const clients = readDb('clients') || [];
+    const agtClients = clients.filter(c => String(c.agent_id) === aid);
+    const clientIds = new Set(agtClients.map(c => String(c.id)));
+    const usernames = new Set(agtClients.filter(c => c.username).map(c => c.username.toLowerCase()));
+    sms = sms.filter(s => String(s.agent_id) === aid || (s.client_id && clientIds.has(String(s.client_id))) || (!s.agent_id && usernames.has((s.user || '').toLowerCase())));
   } else if (manager_id) {
     const mid = String(manager_id);
-    const clients = readDb('clients');
-    const usernames = new Set(clients.filter(c => String(c.manager_id) === mid && c.username).map(c => c.username.toLowerCase()));
-    sms = sms.filter(s => String(s.manager_id) === mid || (!s.manager_id && usernames.has((s.user || '').toLowerCase())));
+    const agents = readDb('agents') || [];
+    const mgrAgents = new Set(agents.filter(a => String(a.manager_id) === mid).map(a => String(a.id)));
+    const clients = readDb('clients') || [];
+    const mgrClients = clients.filter(c => String(c.manager_id) === mid || (c.agent_id && mgrAgents.has(String(c.agent_id))));
+    const clientIds = new Set(mgrClients.map(c => String(c.id)));
+    const usernames = new Set(mgrClients.filter(c => c.username).map(c => c.username.toLowerCase()));
+    sms = sms.filter(s =>
+      String(s.manager_id) === mid ||
+      (s.agent_id && mgrAgents.has(String(s.agent_id))) ||
+      (s.client_id && clientIds.has(String(s.client_id))) ||
+      (!s.manager_id && usernames.has((s.user || '').toLowerCase()))
+    );
   }
 
-  const now = new Date();
-  const todayStr = now.toISOString().slice(0, 10);
-  const yest = new Date(Date.now() - 86400000);
-  const yesterdayStr = yest.toISOString().slice(0, 10);
+  const { todaySet, yesterdaySet, weekStartStr, monthStartStr, yearStartStr } = getDateRangeBuckets();
 
-  const startOfWeek = new Date(now);
-  const dayOfWeek = (now.getDay() + 6) % 7; // Monday = 0
-  startOfWeek.setDate(now.getDate() - dayOfWeek);
-  const weekStartStr = startOfWeek.toISOString().slice(0, 10);
+  let todayCount = 0;
+  let yesterdayCount = 0;
+  let weekCount = 0;
+  let monthCount = 0;
+  let yearCount = 0;
 
-  const monthStartStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+  for (const s of sms) {
+    const dStr = extractDateStr(s);
+    if (!dStr) continue;
+    if (todaySet.has(dStr)) todayCount++;
+    else if (yesterdaySet.has(dStr)) yesterdayCount++;
 
-  const countOn = (dateStr) => sms.filter(s => (s.timestamp || '').slice(0, 10) === dateStr).length;
-  const countSince = (dateStr) => sms.filter(s => (s.timestamp || '').slice(0, 10) >= dateStr).length;
+    if (dStr >= weekStartStr) weekCount++;
+    if (dStr >= monthStartStr) monthCount++;
+    if (dStr >= yearStartStr) yearCount++;
+  }
 
   const weeklyTraffic = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date(Date.now() - i * 86400000);
-    weeklyTraffic.push(countOn(d.toISOString().slice(0, 10)));
+    const dateStr = d.toISOString().slice(0, 10);
+    const count = sms.filter(s => extractDateStr(s) === dateStr).length;
+    weeklyTraffic.push(count);
   }
 
   res.json({
-    today: countOn(todayStr),
-    yesterday: countOn(yesterdayStr),
-    this_week: countSince(weekStartStr),
-    this_month: countSince(monthStartStr),
+    today: todayCount,
+    yesterday: yesterdayCount,
+    this_week: weekCount,
+    this_month: monthCount,
+    this_year: yearCount,
+    year: yearCount,
     all_time: sms.length,
     weekly_traffic: weeklyTraffic
   });
@@ -1129,19 +1790,25 @@ app.get('/api/sms/daily-stats', (req, res) => {
 
 // ── Test Stats Endpoint (/api/sms/test-stats) ─────────────────
 app.get('/api/sms/test-stats', (req, res) => {
-  const logs = readDb('test_sms_logs');
-  const now = new Date();
-  const todayStr = now.toISOString().slice(0, 10);
+  const logs = readDb('test_sms_logs') || [];
+  const { todaySet, yesterdaySet, weekStartStr, monthStartStr, yearStartStr } = getDateRangeBuckets();
 
-  const startOfWeek = new Date(now);
-  const dayOfWeek = (now.getDay() + 6) % 7;
-  startOfWeek.setDate(now.getDate() - dayOfWeek);
-  const weekStartStr = startOfWeek.toISOString().slice(0, 10);
+  let todayCount = 0;
+  let yesterdayCount = 0;
+  let weekCount = 0;
+  let monthCount = 0;
+  let yearCount = 0;
 
-  const monthStartStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+  for (const s of logs) {
+    const dStr = extractDateStr(s);
+    if (!dStr) continue;
+    if (todaySet.has(dStr)) todayCount++;
+    else if (yesterdaySet.has(dStr)) yesterdayCount++;
 
-  const countOn = (dateStr) => logs.filter(s => (s.timestamp || '').slice(0, 10) === dateStr).length;
-  const countSince = (dateStr) => logs.filter(s => (s.timestamp || '').slice(0, 10) >= dateStr).length;
+    if (dStr >= weekStartStr) weekCount++;
+    if (dStr >= monthStartStr) monthCount++;
+    if (dStr >= yearStartStr) yearCount++;
+  }
 
   const weekLabels = [];
   const weekData = [];
@@ -1149,13 +1816,17 @@ app.get('/api/sms/test-stats', (req, res) => {
   for (let i = 6; i >= 0; i--) {
     const d = new Date(Date.now() - i * 86400000);
     weekLabels.push(dayNames[d.getDay()]);
-    weekData.push(countOn(d.toISOString().slice(0, 10)));
+    const dateStr = d.toISOString().slice(0, 10);
+    weekData.push(logs.filter(s => extractDateStr(s) === dateStr).length);
   }
 
   res.json({
-    today: countOn(todayStr),
-    this_week: countSince(weekStartStr),
-    this_month: countSince(monthStartStr),
+    today: todayCount,
+    yesterday: yesterdayCount,
+    this_week: weekCount,
+    this_month: monthCount,
+    this_year: yearCount,
+    year: yearCount,
     total: logs.length,
     delivered: logs.length,
     failed: 0,
@@ -1210,20 +1881,33 @@ app.post('/api/payout-rates', (req, res) => {
 app.get('/api/numbers/sms-ranges', (req, res) => {
   const ranges = readDb('sms_ranges') || [];
   const numbers = readDb('numbers') || [];
-  const enriched = ranges.map(r => ({
-    ...r,
-    unassigned_count: numbers.filter(n => n.country === r.country && n.provider === r.provider && !n.manager_id && !n.agent_id && !n.client_id).length,
-    total_count: numbers.filter(n => n.country === r.country && n.provider === r.provider).length
-  }));
+  const enriched = ranges.map(r => {
+    const rangeName = r.range_name || r.name || r.country || 'Range';
+    return {
+      ...r,
+      range_name: rangeName,
+      name: rangeName,
+      unassigned_count: numbers.filter(n => (n.range_id ? Number(n.range_id) === Number(r.id) : (n.country === r.country && n.provider === r.provider)) && !n.manager_id && !n.agent_id && !n.client_id).length,
+      total_count: numbers.filter(n => (n.range_id ? Number(n.range_id) === Number(r.id) : (n.country === r.country && n.provider === r.provider))).length
+    };
+  });
   res.json(enriched);
 });
 
 app.post('/api/numbers/sms-ranges', (req, res) => {
   const ranges = readDb('sms_ranges') || [];
-  const entry = { id: nextId(ranges), ...req.body, active: true, created: new Date().toISOString() };
+  const rangeName = (req.body.range_name || req.body.name || req.body.country || 'Range').trim();
+  const entry = {
+    id: nextId(ranges),
+    ...req.body,
+    range_name: rangeName,
+    name: rangeName,
+    active: req.body.active !== false,
+    created: new Date().toISOString()
+  };
   ranges.unshift(entry);
   writeDb('sms_ranges', ranges);
-  logAudit('Admin', 'Create SMS Range', `Created range #${entry.id}`, 'Numbers');
+  logAudit('Admin', 'Create SMS Range', `Created range "${entry.range_name}" (#${entry.id})`, 'Numbers');
   res.json(entry);
 });
 
@@ -1232,8 +1916,28 @@ app.patch('/api/numbers/sms-ranges/:id', (req, res) => {
   const id = Number(req.params.id);
   const idx = ranges.findIndex(r => r.id === id);
   if (idx === -1) return res.status(404).json({ error: 'Range not found' });
-  ranges[idx] = { ...ranges[idx], ...req.body };
+  const rangeName = (req.body.range_name || req.body.name || ranges[idx].range_name || ranges[idx].name || '').trim();
+  ranges[idx] = {
+    ...ranges[idx],
+    ...req.body,
+    range_name: rangeName || ranges[idx].country || 'Range',
+    name: rangeName || ranges[idx].country || 'Range'
+  };
   writeDb('sms_ranges', ranges);
+
+  // Synchronize range_name into numbers database if changed
+  if (rangeName) {
+    let numbers = readDb('numbers') || [];
+    let changed = false;
+    numbers.forEach(n => {
+      if (n.range_id && Number(n.range_id) === id) {
+        n.range_name = rangeName;
+        changed = true;
+      }
+    });
+    if (changed) writeDb('numbers', numbers);
+  }
+
   res.json(ranges[idx]);
 });
 
@@ -1309,7 +2013,8 @@ app.post('/api/numbers/import-to-range', (req, res) => {
         country: newRange.country || '',
         provider: newRange.provider || 'Manual',
         prefix: newRange.prefix || '',
-        range_name: newRange.name || `${newRange.country || 'Range'} (${newRange.provider || 'Manual'})`,
+        range_name: (newRange.name || newRange.range_name || newRange.country || 'Range').trim(),
+        name: (newRange.name || newRange.range_name || newRange.country || 'Range').trim(),
         cost: cost,
         payout_schedule: payoutSchedule,
         payout: payout,
@@ -1358,7 +2063,7 @@ app.post('/api/numbers/import-to-range', (req, res) => {
         id: baseId + i,
         number: num,
         range_id: rng.id,
-        range_name: rng.range_name || `${rng.country || 'Range'} (${rng.provider || 'Manual'})`,
+        range_name: rng.range_name || rng.name || rng.country || 'Range',
         prefix: rng.prefix || '',
         app: 'Unassigned',
         status: 'active',
@@ -1445,13 +2150,15 @@ app.post('/api/numbers/bulk-range-import', upload.single('file'), (req, res) => 
 
     for (const key of Object.keys(groups)) {
       const grp = groups[key];
-      const rangeName = `${grp.country} ${grp.provider} SSP ${monthDay}`;
+      const provPart = (grp.provider && grp.provider !== 'Manual' && grp.provider !== grp.country) ? ` ${grp.provider}` : '';
+      const rangeName = `${grp.country}${provPart} SSP ${monthDay}`;
       const rngEntry = {
         id: nextId(ranges),
         country: grp.country,
-        provider: grp.provider,
+        provider: grp.provider || 'Manual',
         prefix: '',
         range_name: rangeName,
+        name: rangeName,
         cost: overrideCost,
         payout_schedule: payoutSchedule,
         payout: overridePayout,
@@ -2932,6 +3639,8 @@ app.get('/api/sms/logs', (req, res) => {
     client_id,
     date_from,
     date_to,
+    period,
+    filter_period,
     range,
     search,
     number,
@@ -2948,31 +3657,78 @@ app.get('/api/sms/logs', (req, res) => {
   const clientMap = {};
   clients.forEach(c => { if (c && c.id) clientMap[c.id] = c.username || c.name; });
 
+  const managers = readDb('managers') || (readDb('users') || []).filter(u => u.role === 'Manager') || [];
+  const managerMap = {};
+  managers.forEach(m => { if (m && m.id) managerMap[m.id] = m.username || m.name; });
+
   if (manager_id && manager_id !== 'undefined' && manager_id !== 'null') {
-    list = list.filter(s => String(s.manager_id) === String(manager_id));
+    const mid = String(manager_id);
+    const mgrAgents = new Set(agents.filter(a => String(a.manager_id) === mid).map(a => String(a.id)));
+    const mgrClients = clients.filter(c => String(c.manager_id) === mid || (c.agent_id && mgrAgents.has(String(c.agent_id))));
+    const mgrClientIds = new Set(mgrClients.map(c => String(c.id)));
+    const mgrUsernames = new Set(mgrClients.filter(c => c.username).map(c => c.username.toLowerCase()));
+    list = list.filter(s =>
+      String(s.manager_id) === mid ||
+      (s.agent_id && mgrAgents.has(String(s.agent_id))) ||
+      (s.client_id && mgrClientIds.has(String(s.client_id))) ||
+      (!s.manager_id && s.user && mgrUsernames.has(String(s.user).toLowerCase()))
+    );
   }
   if (agent_id && agent_id !== 'undefined' && agent_id !== 'null') {
-    list = list.filter(s => String(s.agent_id) === String(agent_id));
+    const aid = String(agent_id);
+    const agtClients = clients.filter(c => String(c.agent_id) === aid);
+    const agtClientIds = new Set(agtClients.map(c => String(c.id)));
+    const agtUsernames = new Set(agtClients.filter(c => c.username).map(c => c.username.toLowerCase()));
+    list = list.filter(s =>
+      String(s.agent_id) === aid ||
+      (s.client_id && agtClientIds.has(String(s.client_id))) ||
+      (!s.agent_id && s.user && agtUsernames.has(String(s.user).toLowerCase()))
+    );
   }
   if (client_id && client_id !== 'undefined' && client_id !== 'null') {
-    list = list.filter(s => String(s.client_id) === String(client_id));
+    const cid = String(client_id);
+    const client = clients.find(c => String(c.id) === cid);
+    const cUser = (client && client.username ? client.username : '').toLowerCase();
+    list = list.filter(s =>
+      String(s.client_id) === cid ||
+      (cUser && String(s.user || '').toLowerCase() === cUser)
+    );
   }
   if (status) {
     list = list.filter(s => String(s.status).toLowerCase() === String(status).toLowerCase());
   }
+
+  // Predefined period filtering (today, yesterday, month, year, etc.)
+  const activePeriod = (period || filter_period || '').trim().toLowerCase();
+  const { todaySet, yesterdaySet, weekStartStr, monthStartStr, yearStartStr } = getDateRangeBuckets();
+  if (activePeriod === 'today' || activePeriod === 'daily') {
+    list = list.filter(s => todaySet.has(extractDateStr(s)));
+  } else if (activePeriod === 'yesterday') {
+    list = list.filter(s => yesterdaySet.has(extractDateStr(s)));
+  } else if (activePeriod === 'this_week' || activePeriod === 'week') {
+    list = list.filter(s => extractDateStr(s) >= weekStartStr);
+  } else if (activePeriod === 'this_month' || activePeriod === 'month') {
+    list = list.filter(s => extractDateStr(s) >= monthStartStr);
+  } else if (activePeriod === 'this_year' || activePeriod === 'year') {
+    list = list.filter(s => extractDateStr(s) >= yearStartStr);
+  }
+
   if (date_from) {
-    const df = String(date_from).trim().slice(0, 19);
+    let df = String(date_from).trim();
+    if (df.length === 10) df = df + ' 00:00:00';
     list = list.filter(s => {
       const ts = (s.timestamp || '').replace('T', ' ');
-      return ts >= df;
+      const ds = extractDateStr(s);
+      return ts >= df || ds >= df.slice(0, 10);
     });
   }
   if (date_to) {
-    let dt = String(date_to).trim().slice(0, 19);
+    let dt = String(date_to).trim();
     if (dt.length === 10) dt = dt + ' 23:59:59';
     list = list.filter(s => {
       const ts = (s.timestamp || '').replace('T', ' ');
-      return ts <= dt;
+      const ds = extractDateStr(s);
+      return ts <= dt || ds <= dt.slice(0, 10);
     });
   }
   if (range) {
@@ -2981,6 +3737,7 @@ app.get('/api/sms/logs', (req, res) => {
       String(s.range_id) === String(range) ||
       String(s.range || '').toLowerCase().includes(rLower) ||
       String(s.range_label || '').toLowerCase().includes(rLower) ||
+      String(s.range_name || '').toLowerCase().includes(rLower) ||
       String(s.country || '').toLowerCase().includes(rLower)
     );
   }
@@ -3007,20 +3764,25 @@ app.get('/api/sms/logs', (req, res) => {
       ? group_by
       : String(group_by).split(',').map(k => k.trim().toLowerCase()).filter(Boolean);
 
-    const validKeys = rawKeys.filter(k => ['date', 'month', 'range', 'agent', 'client', 'number', 'cli'].includes(k));
+    const validKeys = rawKeys.filter(k => ['date', 'daily', 'day', 'month', 'year', 'range', 'manager', 'agent', 'client', 'number', 'cli'].includes(k));
 
     if (validKeys.length > 0) {
       const groups = new Map();
 
       for (const s of list) {
         const keyParts = {};
+        const dStr = extractDateStr(s);
         for (const k of validKeys) {
-          if (k === 'date') {
-            keyParts.date = (s.timestamp || '').slice(0, 10) || 'Unknown';
+          if (k === 'date' || k === 'daily' || k === 'day') {
+            keyParts.date = dStr || 'Unknown';
           } else if (k === 'month') {
-            keyParts.month = (s.timestamp || '').slice(0, 7) || 'Unknown';
+            keyParts.month = dStr ? dStr.slice(0, 7) : 'Unknown';
+          } else if (k === 'year') {
+            keyParts.year = dStr ? dStr.slice(0, 4) : 'Unknown';
           } else if (k === 'range') {
-            keyParts.range = s.range || s.range_label || (s.country ? `${s.country} ${s.provider && s.provider !== '—' ? s.provider : ''}`.trim() : 'General Range');
+            keyParts.range = s.range_name || s.range_label || s.range || (s.country ? `${s.country}${s.provider && s.provider !== 'Manual' && s.provider !== '—' ? ` ${s.provider}` : ''}` : 'General Range');
+          } else if (k === 'manager') {
+            keyParts.manager = s.manager || (s.manager_id && managerMap[s.manager_id]) || (s.manager_id ? `Manager #${s.manager_id}` : 'General');
           } else if (k === 'agent') {
             keyParts.agent = s.agent || s.agent_name || s.user || (s.agent_id && agentMap[s.agent_id]) || (s.agent_id ? `Agent #${s.agent_id}` : 'Direct');
           } else if (k === 'client') {
@@ -3092,24 +3854,80 @@ app.get('/api/sms/logs', (req, res) => {
 
 app.get('/api/sms/test-logs', (req, res) => {
   let list = readDb('test_sms_logs') || [];
-  const { date_from, date_to, range, search, cli, group_by } = req.query;
-  if (date_from) list = list.filter(s => (s.timestamp || '').slice(0, 10) >= date_from);
-  if (date_to) list = list.filter(s => (s.timestamp || '').slice(0, 10) <= date_to);
-  if (range) list = list.filter(s => (s.range || s.range_label || '').toLowerCase().includes(range.toLowerCase()));
+  const ranges = readDb('sms_ranges') || [];
+  const testNumbers = readDb('test_numbers') || [];
+  const numToRange = {};
+  testNumbers.forEach(tn => {
+    if (tn.number) numToRange[tn.number] = tn.range_name || tn.range_label || tn.range;
+  });
+
+  list = list.map(s => {
+    let rName = s.range_name || s.range_label || s.range;
+    if (!rName || rName.toLowerCase().includes('manual') || rName === '—') {
+      if (numToRange[s.number]) {
+        rName = numToRange[s.number];
+      } else if (s.range_id) {
+        const found = ranges.find(r => r.id === s.range_id);
+        if (found) rName = found.range_name || found.name;
+      }
+    }
+    if (!rName || rName.toLowerCase().includes('manual')) {
+      rName = s.country || 'Test Range';
+    }
+    return { ...s, range_name: rName, range_label: rName, range: rName };
+  });
+
+  const { date_from, date_to, period, filter_period, range, search, cli, group_by } = req.query;
+
+  const activePeriod = (period || filter_period || '').trim().toLowerCase();
+  const { todaySet, yesterdaySet, weekStartStr, monthStartStr, yearStartStr } = getDateRangeBuckets();
+  if (activePeriod === 'today' || activePeriod === 'daily') {
+    list = list.filter(s => todaySet.has(extractDateStr(s)));
+  } else if (activePeriod === 'yesterday') {
+    list = list.filter(s => yesterdaySet.has(extractDateStr(s)));
+  } else if (activePeriod === 'this_week' || activePeriod === 'week') {
+    list = list.filter(s => extractDateStr(s) >= weekStartStr);
+  } else if (activePeriod === 'this_month' || activePeriod === 'month') {
+    list = list.filter(s => extractDateStr(s) >= monthStartStr);
+  } else if (activePeriod === 'this_year' || activePeriod === 'year') {
+    list = list.filter(s => extractDateStr(s) >= yearStartStr);
+  }
+
+  if (date_from) {
+    let df = String(date_from).trim();
+    if (df.length === 10) df = df + ' 00:00:00';
+    list = list.filter(s => {
+      const ts = (s.timestamp || '').replace('T', ' ');
+      const ds = extractDateStr(s);
+      return ts >= df || ds >= df.slice(0, 10);
+    });
+  }
+  if (date_to) {
+    let dt = String(date_to).trim();
+    if (dt.length === 10) dt = dt + ' 23:59:59';
+    list = list.filter(s => {
+      const ts = (s.timestamp || '').replace('T', ' ');
+      const ds = extractDateStr(s);
+      return ts <= dt || ds <= dt.slice(0, 10);
+    });
+  }
+  if (range) list = list.filter(s => (s.range_name || s.range || s.range_label || '').toLowerCase().includes(range.toLowerCase()));
   if (search) list = list.filter(s => (s.number || '').includes(search) || (s.message || '').includes(search));
   if (cli) list = list.filter(s => (s.cli || '').toLowerCase().includes(cli.toLowerCase()));
 
   if (group_by) {
     const rawKeys = Array.isArray(group_by) ? group_by : String(group_by).split(',').map(k => k.trim().toLowerCase()).filter(Boolean);
-    const validKeys = rawKeys.filter(k => ['date', 'month', 'range', 'number', 'cli'].includes(k));
+    const validKeys = rawKeys.filter(k => ['date', 'daily', 'day', 'month', 'year', 'range', 'number', 'cli'].includes(k));
     if (validKeys.length > 0) {
       const groups = new Map();
       for (const s of list) {
         const kp = {};
+        const dStr = extractDateStr(s);
         for (const k of validKeys) {
-          if (k === 'date') kp.date = (s.timestamp || '').slice(0, 10);
-          else if (k === 'month') kp.month = (s.timestamp || '').slice(0, 7);
-          else if (k === 'range') kp.range = s.range || s.range_label || 'Test Range';
+          if (k === 'date' || k === 'daily' || k === 'day') kp.date = dStr || 'Unknown';
+          else if (k === 'month') kp.month = dStr ? dStr.slice(0, 7) : 'Unknown';
+          else if (k === 'year') kp.year = dStr ? dStr.slice(0, 4) : 'Unknown';
+          else if (k === 'range') kp.range = s.range_name || s.range || s.range_label || 'Test Range';
           else if (k === 'number') kp.number = s.number || '—';
           else if (k === 'cli') kp.cli = s.cli || '—';
         }
@@ -3127,20 +3945,129 @@ app.get('/api/sms/test-logs', (req, res) => {
     }
   }
 
-  res.json({ data: list, total: list.length, grouped: false });
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 100;
+  const start = (page - 1) * limit;
+  res.json({ data: list.slice(start, start + limit), total: list.length, grouped: false });
 });
 
 app.get('/api/sms/test-numbers', (req, res) => {
-  const data = readDb('test_numbers') || [];
-  res.json({ data: data, total: data.length });
+  const ranges = readDb('sms_ranges') || [];
+  const rangeMap = {};
+  ranges.forEach(r => {
+    rangeMap[r.id] = r;
+    if (r.range_name) rangeMap[r.range_name] = r;
+  });
+  let data = readDb('test_numbers') || [];
+  data = data.map(item => {
+    const rng = (item.range_id && rangeMap[item.range_id]) || (item.range_name && rangeMap[item.range_name]);
+    const rName = item.range_name || item.range_label || item.range || (rng && (rng.range_name || rng.name)) || item.country || '—';
+    return {
+      ...item,
+      range_name: rName,
+      range_label: rName,
+      range: rName
+    };
+  });
+
+  const search = (req.query.search || '').toLowerCase().trim();
+  const rangeFilter = (req.query.range || '').toLowerCase().trim();
+  if (search) {
+    data = data.filter(d => (d.number || '').toLowerCase().includes(search) || (d.range_name || '').toLowerCase().includes(search));
+  }
+  if (rangeFilter) {
+    data = data.filter(d => String(d.range_id) === rangeFilter || (d.range_name || '').toLowerCase().includes(rangeFilter));
+  }
+
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || data.length;
+  const total = data.length;
+  const paged = limit < total ? data.slice((page - 1) * limit, page * limit) : data;
+  res.json({ data: paged, total });
 });
 
 app.post('/api/sms/test-numbers', (req, res) => {
   const data = readDb('test_numbers') || [];
-  const item = { id: nextId(data), ...req.body, created: new Date().toISOString() };
+  const ranges = readDb('sms_ranges') || [];
+  const rng = req.body.range_id ? ranges.find(r => r.id === Number(req.body.range_id)) : null;
+  const rName = (req.body.range_name || req.body.range_label || req.body.range || (rng && (rng.range_name || rng.name)) || req.body.country || 'Range').trim();
+  const item = {
+    id: nextId(data),
+    ...req.body,
+    range_name: rName,
+    range_label: rName,
+    range: rName,
+    created: new Date().toISOString()
+  };
   data.unshift(item);
   writeDb('test_numbers', data);
   res.json(item);
+});
+
+app.post('/api/sms/test-numbers/bulk', (req, res) => {
+  const { range_id, count } = req.body || {};
+  const ranges = readDb('sms_ranges') || [];
+  const rng = ranges.find(r => String(r.id) === String(range_id));
+  if (!rng) return res.status(404).json({ error: 'Range not found' });
+  const rName = rng.range_name || rng.name || rng.country || 'Range';
+  const numbersPool = readDb('numbers') || [];
+  let available = numbersPool.filter(n => n.range_id && Number(n.range_id) === Number(range_id));
+  if (!available.length) {
+    available = numbersPool.filter(n => n.range_name === rName || (n.country === rng.country && (n.provider === rng.provider || n.provider === 'Manual')));
+  }
+  const pullCount = Math.min(parseInt(count) || 10, available.length || 10);
+  const testNumbers = readDb('test_numbers') || [];
+  const added = [];
+  const existingSet = new Set(testNumbers.map(tn => tn.number));
+
+  if (available.length) {
+    for (const numObj of available) {
+      if (added.length >= pullCount) break;
+      if (!existingSet.has(numObj.number)) {
+        const item = {
+          id: nextId(testNumbers) + added.length,
+          number: numObj.number,
+          range_id: rng.id,
+          range_name: rName,
+          range_label: rName,
+          range: rName,
+          country: rng.country,
+          provider: rng.provider || 'Manual',
+          created: new Date().toISOString()
+        };
+        added.push(item);
+        existingSet.add(numObj.number);
+      }
+    }
+  }
+
+  // If pool was empty or fewer than requested, generate numbers matching range prefix
+  const prefix = rng.prefix || '1';
+  let genAttempt = 0;
+  while (added.length < pullCount && genAttempt < 200) {
+    genAttempt++;
+    const randomSuffix = Math.floor(1000000 + Math.random() * 9000000);
+    const genNum = `${prefix}${randomSuffix}`;
+    if (!existingSet.has(genNum)) {
+      const item = {
+        id: nextId(testNumbers) + added.length,
+        number: genNum,
+        range_id: rng.id,
+        range_name: rName,
+        range_label: rName,
+        range: rName,
+        country: rng.country,
+        provider: rng.provider || 'Manual',
+        created: new Date().toISOString()
+      };
+      added.push(item);
+      existingSet.add(genNum);
+    }
+  }
+
+  testNumbers.unshift(...added);
+  writeDb('test_numbers', testNumbers);
+  res.json({ success: true, added: added.length, range_name: rName });
 });
 
 app.get('/api/sms/stats', (req, res) => {

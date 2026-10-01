@@ -387,8 +387,9 @@ async function pgDashboard() {
     const smsStats = await apiFetch(`/api/sms/client-stats?client_id=${CLIENT_ID}`);
 
     const todaySms = smsStats?.today || 0;
-    const yesterdaySms = smsStats?.yesterday || 0;
     const weekSms = smsStats?.this_week || 0;
+    const monthSms = smsStats?.this_month || 0;
+    const yearSms = smsStats?.this_year || smsStats?.all_time || 0;
     const payoutMonth = smsStats?.payout_this_month || 0;
     const trafficData = smsStats?.weekly_traffic || Array.from({ length: 7 }, () => 0);
     const labels = [];
@@ -416,10 +417,10 @@ async function pgDashboard() {
       </div>
 
       <div class="stats-grid" style="grid-template-columns:1fr;">
-        ${statCard('Today SMS', 'fas fa-comment-sms', todaySms, 'blue', 'Received today')}
-        ${statCard('Yesterday SMS', 'fas fa-calendar-days', yesterdaySms, 'red', 'Received yesterday')}
-        ${statCard('Last 7 Days', 'fas fa-wave-square', weekSms, 'green', 'Total this week')}
-        ${statCard('Payout This Month', 'fas fa-dollar-sign', '$' + payoutMonth.toFixed(2), 'yellow', 'Based on delivery rate')}
+        ${statCard('Today SMS', 'fas fa-comment-sms', todaySms, 'blue', 'Daily')}
+        ${statCard('SMS This Week', 'fas fa-wave-square', weekSms, 'green', 'Weekly')}
+        ${statCard('SMS This Month', 'fas fa-calendar-alt', monthSms, 'purple', 'Monthly')}
+        ${statCard('SMS This Year', 'fas fa-calendar-check', yearSms, 'cyan', 'Yearly')}
       </div>
 
       <div class="card">
@@ -532,7 +533,15 @@ async function pgMyNumbers(page = 1) {
     const myRanges = ranges.filter(r => myCountryProviderSet.has(`${r.country}|${r.provider}`));
     const rateCard = rateCardData || [];
     const clientDailyLimit = clientInfo?.daily_limit ?? 0;
-    const rangeLookup = {}; ranges.forEach(r => rangeLookup[`${r.country}|${r.provider}`] = r);
+    const rangeLookup = {};
+    const rangeById = {};
+    const rangeByName = {};
+    ranges.forEach(r => {
+      if (r.id) rangeById[r.id] = r;
+      if (r.range_name) rangeByName[r.range_name] = r;
+      if (r.name) rangeByName[r.name] = r;
+      rangeLookup[`${r.country}|${r.provider}`] = r;
+    });
     const rateLookup = {}; rateCard.forEach(r => rateLookup[`${r.country}|${r.provider}`] = r);
 
     const content = document.getElementById('page-content');
@@ -559,7 +568,11 @@ async function pgMyNumbers(page = 1) {
           <div class="filters-bar" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <select id="cl-range-filter" onchange="pgMyNumbers(1)" style="min-width:160px;">
               <option value="">Select Range</option>
-              ${myRanges.map(r => `<option value="${r.id}" ${rangeFilter == r.id ? 'selected' : ''}>${r.country || ''} ${r.prefix || ''}</option>`).join('')}
+              ${myRanges.map(r => {
+                const rName = r.range_name || r.name || r.country || 'Range';
+                const extra = r.country && r.country !== rName ? ` (${r.country}${r.prefix ? ` ${r.prefix}` : ''})` : (r.prefix ? ` (${r.prefix})` : '');
+                return `<option value="${r.id}" ${rangeFilter == r.id ? 'selected' : ''}>${rName}${extra}</option>`;
+              }).join('')}
             </select>
             <span style="font-size:13px;color:var(--text-muted);">Show</span>
             <select onchange="clientNumbersPerPage=this.value==='all'?'all':parseInt(this.value);pgMyNumbers(1)" style="width:80px;">
@@ -580,10 +593,11 @@ async function pgMyNumbers(page = 1) {
           ${buildTable(
             ['RANGE', 'PREFIX', 'NUMBER', 'MY PAYTERM', 'MY PAYOUT', 'LIMITS'],
             numbers.map(n => {
-              const rInfo = rangeLookup[`${n.country}|${n.provider}`] || null;
+              const rInfo = (n.range_id && rangeById[n.range_id]) || (n.range_name && rangeByName[n.range_name]) || rangeLookup[`${n.country}|${n.provider}`] || null;
+              const dispRange = n.range_name || n.range_label || n.range || rInfo?.range_name || rInfo?.name || (n.country && n.provider && n.provider !== 'Manual' ? `${n.country} - ${n.provider}` : (n.country || '—'));
               return [
-                rInfo?.range_name || `${n.country || ''}-${n.provider || ''}`,
-                rInfo?.prefix || '—',
+                dispRange,
+                rInfo?.prefix || n.prefix || '—',
                 `<span class="monospace fw-600">${n.number || '—'}</span>`,
                 (rInfo?.payout_schedule || n.payment_term) ? (rInfo?.payout_schedule || n.payment_term).charAt(0).toUpperCase() + (rInfo?.payout_schedule || n.payment_term).slice(1) : '—',
                 n.client_payout != null ? `$${n.client_payout}` : '$0',
@@ -616,18 +630,27 @@ async function searchClientNumbers() {
     ]);
     const ranges = rangesData || [];
     const rateCard = rateCardData || [];
-    const rangeLookup = {}; ranges.forEach(r => rangeLookup[`${r.country}|${r.provider}`] = r);
+    const rangeLookup = {};
+    const rangeById = {};
+    const rangeByName = {};
+    ranges.forEach(r => {
+      if (r.id) rangeById[r.id] = r;
+      if (r.range_name) rangeByName[r.range_name] = r;
+      if (r.name) rangeByName[r.name] = r;
+      rangeLookup[`${r.country}|${r.provider}`] = r;
+    });
     const rateLookup = {}; rateCard.forEach(r => rateLookup[`${r.country}|${r.provider}`] = r);
     const wrap = document.querySelector('.table-wrap');
     if (wrap) {
       wrap.outerHTML = buildTable(
         ['RANGE', 'PREFIX', 'NUMBER', 'PAYOUT', 'APP', 'SMS COUNT', 'STATUS', 'LAST SMS'],
         (data?.data || []).map(n => {
-          const rInfo = rangeLookup[`${n.country}|${n.provider}`] || null;
+          const rInfo = (n.range_id && rangeById[n.range_id]) || (n.range_name && rangeByName[n.range_name]) || rangeLookup[`${n.country}|${n.provider}`] || null;
           const rateInfo = rateLookup[`${n.country}|${n.provider}`] || null;
+          const dispRange = n.range_name || n.range_label || n.range || rInfo?.range_name || rInfo?.name || (n.country && n.provider && n.provider !== 'Manual' ? `${n.country} - ${n.provider}` : (n.country || '—'));
           return [
-            rInfo?.range_name || `${n.country || ''}-${n.provider || ''}`,
-            rInfo?.prefix || '—',
+            dispRange,
+            rInfo?.prefix || n.prefix || '—',
             `<span class="monospace fw-600">${n.number || '—'}</span>`,
             rateInfo ? `$${rateInfo.sell_rate}` : '—',
             `<span style="color:${serviceColor(n.app)};font-weight:600">${n.app || '—'}</span>`,
@@ -704,8 +727,10 @@ async function pgMySms(page = 1) {
 
       <div class="card" style="margin-bottom:16px;">
         <div class="filters-bar" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <input type="date" id="csms-from" value="${dateFrom}">
-          <input type="date" id="csms-to" value="${dateTo}">
+          <label style="font-size:12px;font-weight:600;color:var(--text-muted);">From:</label>
+          <input type="date" id="csms-from" value="${dateFrom}" style="min-width:130px;cursor:pointer;">
+          <label style="font-size:12px;font-weight:600;color:var(--text-muted);">To:</label>
+          <input type="date" id="csms-to" value="${dateTo}" style="min-width:130px;cursor:pointer;">
           <select id="csms-range" style="min-width:140px;">
             <option value="">Filter Range</option>
             ${rangesList.map(r => `<option value="${r.id}" ${rangeFilter == r.id ? 'selected' : ''}>${r.country || ''} ${r.prefix || ''}</option>`).join('')}
@@ -734,18 +759,26 @@ async function pgMySms(page = 1) {
           </span>
         </div>
         ${(() => {
-          const rgLookup = {}; rangesList.forEach(r => rgLookup[`${r.country}|${r.provider}`] = r);
+          const rgLookup = {};
+          rangesList.forEach(r => {
+            if (r.id) rgLookup[r.id] = r;
+            rgLookup[`${r.country}|${r.provider}`] = r;
+          });
           return buildTable(
           ['DATE', 'RANGE', 'NUMBER', 'CLI', 'SMS', 'CURRENCY', 'PAYOUT'],
-          logs.map(s => [
-            fmtShort(s.timestamp),
-            rgLookup[`${s.country}|${s.provider}`]?.range_name || `${s.country || ''}-${s.provider || ''}`,
-            `<span class="monospace">${s.number || '—'}</span>`,
-            s.cli || '—',
-            `<span class="text-muted">${s.message || '—'}</span>`,
-            'USD',
-            `<span class="text-success">$${s.profit || s.cost || 0}</span>`
-          ])
+          logs.map(s => {
+            const rInfo = (s.range_id && rgLookup[s.range_id]) || rgLookup[`${s.country}|${s.provider}`];
+            const dispRange = s.range_name || s.range_label || s.range || rInfo?.range_name || rInfo?.name || (s.country && s.provider && s.provider !== 'Manual' ? `${s.country} - ${s.provider}` : (s.country || '—'));
+            return [
+              fmtShort(s.timestamp),
+              dispRange,
+              `<span class="monospace">${s.number || '—'}</span>`,
+              s.cli || '—',
+              `<span class="text-muted">${s.message || '—'}</span>`,
+              'USD',
+              `<span class="text-success">$${s.profit || s.cost || 0}</span>`
+            ];
+          })
         );
         })()}
         ${clientSmsPerPage === 'all' ? '' : pagination(page, total, perPage, pgMySms)}
@@ -988,6 +1021,10 @@ async function loadClRecentSms() {
 }
 
 function pgProfile() {
+  if (window.SpeedProfile) {
+    window.SpeedProfile.render('page-content');
+    return;
+  }
   const content = document.getElementById('page-content');
   content.innerHTML = `
     <div class="page-header">

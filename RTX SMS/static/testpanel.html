@@ -25,6 +25,7 @@
 })();
 </script>
 <script src="/static/js/brand-theme.js"></script>
+<script src="/static/js/speed-profile-security.js"></script>
 <script src="/static/js/speed-auth-guard.js"></script>
 <script>
   if (window.SpeedAuth) {
@@ -72,7 +73,17 @@
         </div>
       </div>
       <div class="zy-head-right" style="display:flex;align-items:center;gap:12px;">
-        <a href="/login" class="tp-signin-btn" style="background:#0284c7;color:#ffffff;border:none;border-radius:6px;padding:7px 16px;font-size:13px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 6px rgba(0,0,0,0.2);"><i class="fas fa-arrow-right-to-bracket"></i> Sign in</a>
+        <div class="zy-user" onclick="zyToggleUser(event)">
+          <span id="tp-header-user">Tester</span>
+          <span class="zy-dot"></span>
+          <span class="zy-ava"><i class="fas fa-vial"></i></span>
+          <i class="fas fa-caret-down"></i>
+        </div>
+        <div class="zy-user-menu" id="zy-user-menu">
+          <a onclick="loadPage('my-profile')"><i class="far fa-user"></i> <span>My Profile</span></a>
+          <div class="zy-um-divider"></div>
+          <a class="zy-um-logout" onclick="doLogout()"><i class="fas fa-arrow-right-from-bracket"></i> <span>Logout</span></a>
+        </div>
       </div>
     </div>
     <div class="zy-mega" id="zy-mega"></div>

@@ -67,6 +67,16 @@
       angle: '180deg',
       textColor: '#ffffff'
     },
+    clean_white_slate: {
+      name: 'Clean White & Midnight Dashboard (Default)',
+      desc: 'Pure White Workspace + Bold Black Fonts (Top Dashboard & Sidebar Accent Only)',
+      gradient: 'linear-gradient(180deg, #475569 0%, #1e293b 50%, #0f172a 100%)',
+      color1: '#475569', stop1: 0,
+      color2: '#1e293b', stop2: 50,
+      color3: '#0f172a', stop3: 100,
+      angle: '180deg',
+      textColor: '#ffffff'
+    },
     midnight_slate: {
       name: 'Midnight Slate Elite',
       desc: 'Silver Slate, Gunmetal, Onyx Charcoal',
@@ -283,6 +293,85 @@
       }
       body, button, input, select, textarea, .card, .dt, .zy-sidenav, .page-title, h1, h2, h3, h4 {
         font-family: var(--app-font) !important;
+      }
+
+      /* ── Crisp Professional Workspace: Clean White with High Contrast Dark Typography ── */
+      body, .zy-main, .page-content, .zy-body {
+        background-color: #ffffff !important;
+        color: #0f172a !important;
+      }
+      .card, .dt, .panel, .zy-panel, .card-body {
+        background-color: #ffffff !important;
+        color: #0f172a !important;
+        border-color: #e2e8f0 !important;
+      }
+      h1, h2, h3, h4, .page-title, .card-title {
+        color: #0f172a !important;
+      }
+      .table, table.dt, table.zy-dt, table.zy-dt2-table {
+        color: #0f172a !important;
+        background-color: #ffffff !important;
+      }
+      table.zy-dt2-table td, table.dt td, .dt tbody td {
+        color: #1e293b !important;
+      }
+      label, .form-label {
+        color: #1e293b !important;
+      }
+
+      /* ── Sleek High-Definition Sidebar (Owner, Manager, Agent, Client, TestPanel) ── */
+      .zy-side, .adminui .zy-side {
+        background: #ffffff !important;
+        border-right: 1px solid #e2e8f0 !important;
+        box-shadow: 2px 0 12px rgba(15, 23, 42, 0.05) !important;
+      }
+      .zy-side-head, .adminui .zy-side-head {
+        background: #ffffff !important;
+        border-bottom: 2px solid #f1f5f9 !important;
+      }
+      .zy-side-head::after, .adminui .zy-side-head::after {
+        background: var(--header-gradient) !important;
+      }
+      .zy-side-head .zy-welcome {
+        color: #64748b !important;
+        font-weight: 600 !important;
+      }
+      .zy-side-head .zy-role {
+        color: #0f172a !important;
+        font-weight: 800 !important;
+      }
+      .zy-sidenav .zy-snav, .adminui .zy-sidenav .zy-snav {
+        background: var(--header-gradient) !important;
+        color: var(--header-text-color, #ffffff) !important;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.22) !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.35px !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12) !important;
+        transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      }
+      .zy-sidenav .zy-snav:hover, .adminui .zy-sidenav .zy-snav:hover {
+        filter: brightness(1.15) !important;
+        padding-left: 15px !important;
+      }
+      .zy-sidenav .zy-snav.active, .adminui .zy-sidenav .zy-snav.active {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        border-left: 4px solid var(--brand-primary, #0284c7) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+        text-shadow: none !important;
+      }
+      .zy-sidenav .zy-snav.active span,
+      .zy-sidenav .zy-snav.active .zy-ic,
+      .zy-sidenav .zy-snav.active .zy-ic i,
+      .zy-sidenav .zy-snav.active .zy-caret,
+      .adminui .zy-sidenav .zy-snav.active span,
+      .adminui .zy-sidenav .zy-snav.active .zy-ic,
+      .adminui .zy-sidenav .zy-snav.active .zy-ic i,
+      .adminui .zy-sidenav .zy-snav.active .zy-caret {
+        color: #0f172a !important;
+      }
+      .zy-side-foot, .adminui .zy-side-foot {
+        background: var(--header-gradient) !important;
       }
       .zy-header, .adminui .zy-header {
         background: var(--header-gradient) !important;

@@ -350,17 +350,110 @@ const ZY_COUNTRY_LIST = ['Afghanistan','Aland Islands','Albania','Algeria','Amer
  'Zambia','Zimbabwe'];
 
 /* ═══ shared filter box (dates + agent + Show Report) ═══════ */
-function zyMonthStart() { const d = new Date(); d.setMonth(d.getMonth() - 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`; }
-function zyToday() { return new Date().toISOString().slice(0, 10); }
+function getLocalDateStr(dateObj = new Date()) {
+  const d = dateObj instanceof Date ? dateObj : new Date(dateObj);
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+function zyMonthStart() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-01`;
+}
+function zyToday() { return getLocalDateStr(); }
+
+function onCdrDateInputChange(fromId, toId) {
+  const f = document.getElementById(fromId);
+  const t = document.getElementById(toId);
+  if (!f || !t) return;
+  if (f.value && t.value && f.value > t.value) {
+    t.value = f.value;
+  }
+}
+window.onCdrDateInputChange = onCdrDateInputChange;
+
 function zyFilterBox(id, onShow, extraBtn) {
+  const today = getLocalDateStr();
   return `<div class="zy-filterbox">
-    <input class="zy-fb-input" id="${id}-from" value="${zyMonthStart()} 00:00:00">
-    <input class="zy-fb-input" id="${id}-to" value="${zyToday()} 23:59:59">
-    <select class="zy-fb-input" id="${id}-agent"><option value="">Filter Agent</option></select>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      <label style="font-size:12px;font-weight:700;color:var(--text-secondary,#64748b);">From:</label>
+      <input type="date" class="zy-fb-input" id="${id}-from" value="${today}" style="cursor:pointer;padding:6px 10px;font-weight:600;">
+      <label style="font-size:12px;font-weight:700;color:var(--text-secondary,#64748b);">To:</label>
+      <input type="date" class="zy-fb-input" id="${id}-to" value="${today}" style="cursor:pointer;padding:6px 10px;font-weight:600;">
+      <select class="zy-fb-input" id="${id}-agent"><option value="">Filter Agent</option></select>
+    </div>
     <div class="zy-fb-btns">${extraBtn || ''}
       <button class="zy-btn-blue" onclick="${onShow}">Show Report</button></div>
   </div>`;
 }
+
+// Auto Date Rollover Watcher (handles automatic midnight & day date change without manual intervention)
+(function initAutoDateRolloverWatcher() {
+  if (window._autoDateWatcherStarted) return;
+  window._autoDateWatcherStarted = true;
+  let lastDay = getLocalDateStr();
+
+  // Watch every 10 seconds for date changes (midnight rollover or day change)
+  setInterval(() => {
+    const currentDay = getLocalDateStr();
+    if (currentDay !== lastDay) {
+      console.log(`[AutoDateWatcher] Date rollover detected: ${lastDay} -> ${currentDay}`);
+      const oldDay = lastDay;
+      lastDay = currentDay;
+
+      // Update date labels across the top bar / dashboard headers
+      const formattedDate = new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+      document.querySelectorAll('.fa-calendar-day').forEach(icon => {
+        if (icon && icon.parentElement) {
+          // If this is a date badge/indicator, update the date text
+          const p = icon.parentElement;
+          if (p.textContent && (p.textContent.includes(oldDay) || p.classList.contains('header-date') || p.id === 'header-date' || p.closest('.page-header') || p.closest('.zy-dash-head'))) {
+            p.innerHTML = `<i class="fas fa-calendar-day"></i> ${formattedDate}`;
+          }
+        }
+      });
+
+      // Check all active date from/to inputs on the page
+      const pairs = [
+        ['rp-from', 'rp-to'],
+        ['cdr-from', 'cdr-to'],
+        ['c-from', 'c-to'],
+        ['tc-from', 'tc-to'],
+        ['mcdr-from', 'mcdr-to'],
+        ['csms-from', 'csms-to'],
+        ['cs-from', 'cs-to'],
+        ['my-from', 'my-to'],
+        ['ad-rs-from', 'ad-rs-to'],
+        ['th-date-from', 'th-date-to']
+      ];
+      let didUpdate = false;
+      for (const [fId, tId] of pairs) {
+        const fEl = document.getElementById(fId);
+        const tEl = document.getElementById(tId);
+        if (fEl && tEl) {
+          // If the filter was previously set to today / the old day, roll it forward automatically!
+          if (fEl.value.includes(oldDay) && tEl.value.includes(oldDay)) {
+            fEl.value = fEl.type === 'date' ? currentDay : `${currentDay} 00:00:00`;
+            tEl.value = tEl.type === 'date' ? currentDay : `${currentDay} 23:59:59`;
+            didUpdate = true;
+          }
+        }
+      }
+
+      // Also scan any other standalone date inputs on the screen
+      document.querySelectorAll('input[type="date"]').forEach(inp => {
+        if (inp.value === oldDay) {
+          inp.value = currentDay;
+          didUpdate = true;
+        }
+      });
+
+      if (didUpdate) {
+        // Updated input date values silently without disturbing report filtering
+      }
+    }
+  }, 10000);
+})();
 async function zyFillAgents(selectId) {
   const res = await apiFetch(`/api/agents?manager_id=${MANAGER_ID}&limit=200`);
   ZY_AGENTS = (res && res.data) || [];

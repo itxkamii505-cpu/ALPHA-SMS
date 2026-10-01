@@ -5,6 +5,7 @@
     "provider": "Manual",
     "prefix": "519",
     "range_name": "Peru_KB1",
+    "name": "Peru_KB1",
     "cost": 0.013,
     "payout_schedule": "weekly",
     "payout": 0.011,

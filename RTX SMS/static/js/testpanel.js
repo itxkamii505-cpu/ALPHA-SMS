@@ -389,9 +389,9 @@ function buildRangesTable(data) {
   }
   const tbody = rows.map((r, i) => `
     <tr class="${i % 2 ? 'alt' : ''}">
-      <td>${r.prefix || '—'}</td>
+      <td><b>${r.range_name || r.name || (r.prefix ? `Range ${r.prefix}` : r.country) || '—'}</b></td>
       <td>${r.country || '—'}</td>
-      <td>${r.provider || '—'}</td>
+      <td>${r.provider && r.provider !== 'Manual' ? r.provider : (r.prefix ? `Prefix ${r.prefix}` : 'Direct')}</td>
       <td>${statusBadge(r.active ? 'active' : 'inactive')}</td>
     </tr>
   `).join('');
@@ -432,9 +432,11 @@ async function pgTestNumbers() {
   try {
     const ranges = await api('/api/numbers/sms-ranges');
     window._tnRanges = ranges || [];
-    const rOpts = (ranges || []).map(r =>
-      `<option value="${r.id}">${r.country || ''} ${r.prefix || ''}</option>`
-    ).join('');
+    const rOpts = (ranges || []).map(r => {
+      const rName = r.range_name || r.name || r.country || 'Range';
+      const extra = r.country && r.country !== rName ? ` (${r.country}${r.prefix ? ` ${r.prefix}` : ''})` : (r.prefix ? ` (${r.prefix})` : '');
+      return `<option value="${r.id}">${rName}${extra}</option>`;
+    }).join('');
 
     document.getElementById('main-content').innerHTML = `
       <p class="page-intro">Test numbers uploaded by Owner, and the live SMS test feed received on them.</p>
@@ -564,7 +566,7 @@ function renderTn() {
 
   const tbody = tn_rows.length
     ? tn_rows.map((r, i) => `<tr class="${i % 2 ? 'alt' : ''}">
-        <td>${r.range_label || '—'}</td>
+        <td><b>${r.range_name || r.range_label || r.range || (r.country ? `${r.country}` : '—')}</b></td>
         <td><b>${r.number || '—'}</b></td>
       </tr>`).join('')
     : `<tr><td colspan="2" style="text-align:center;padding:18px;color:var(--text-muted);">No test numbers yet — use "Show Report" to have Owner add some</td></tr>`;
@@ -583,11 +585,11 @@ function tnGo(p) {
 }
 
 function tnCopy() {
-  const text = tn_rows.map(r => `${r.range_label || ''}\t${r.number || ''}`).join('\n');
+  const text = tn_rows.map(r => `${r.range_name || r.range_label || r.range || ''}\t${r.number || ''}`).join('\n');
   navigator.clipboard.writeText(text).then(() => toast('Copied!', 'success')).catch(() => toast('Copy failed', 'error'));
 }
 function tnCsv() {
-  csvDl(['Range', 'Test Number'], tn_rows.map(r => [r.range_label || '', r.number || '']), 'test_numbers.csv');
+  csvDl(['Range', 'Test Number'], tn_rows.map(r => [r.range_name || r.range_label || r.range || '', r.number || '']), 'test_numbers.csv');
   toast('CSV downloaded', 'success');
 }
 
@@ -608,7 +610,7 @@ function renderRecentSms() {
   const tbody = rs_rows.length
     ? rs_rows.map((s, i) => `<tr class="${i % 2 ? 'alt' : ''}">
         <td style="white-space:nowrap;">${fmtDT(s.timestamp)}</td>
-        <td>${s.range_label || '—'}</td>
+        <td><b>${s.range_name || s.range_label || s.range || (s.country ? `${s.country}` : '—')}</b></td>
         <td><b>${s.number || '—'}</b></td>
         <td>${maskCli(s.cli)}</td>
         <td>********</td>
@@ -631,12 +633,12 @@ function rsGo(p) {
 }
 
 function rsCopy() {
-  const text = rs_rows.map(s => `${fmtDT(s.timestamp)}\t${s.range_label || ''}\t${s.number || ''}\t${maskCli(s.cli)}\t********`).join('\n');
+  const text = rs_rows.map(s => `${fmtDT(s.timestamp)}\t${s.range_name || s.range_label || s.range || ''}\t${s.number || ''}\t${maskCli(s.cli)}\t********`).join('\n');
   navigator.clipboard.writeText(text).then(() => toast('Copied!', 'success')).catch(() => toast('Copy failed', 'error'));
 }
 function rsCsv() {
   csvDl(['Date', 'Range', 'Number', 'CLI', 'SMS'],
-    rs_rows.map(s => [fmtDT(s.timestamp), s.range_label || '', s.number || '', maskCli(s.cli), '********']),
+    rs_rows.map(s => [fmtDT(s.timestamp), s.range_name || s.range_label || s.range || '', s.number || '', maskCli(s.cli), '********']),
     'recent_sms_test.csv');
   toast('CSV downloaded', 'success');
 }
@@ -654,7 +656,11 @@ async function openUploadTestNumbersModal() {
           <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Pull numbers from an existing range into the test panel.</p>
           <label class="form-label">Range</label>
           <select id="tn-up-range" style="width:100%;margin-bottom:12px;">
-            ${ranges.map(r => `<option value="${r.id}">${r.country || ''} ${r.prefix || ''} — ${r.provider || ''}</option>`).join('')}
+            ${ranges.map(r => {
+              const rName = r.range_name || r.name || r.country || 'Range';
+              const extra = r.country && r.country !== rName ? ` (${r.country}${r.prefix ? ` ${r.prefix}` : ''})` : (r.prefix ? ` (${r.prefix})` : '');
+              return `<option value="${r.id}">${rName}${extra}</option>`;
+            }).join('')}
           </select>
           <label class="form-label">How many numbers</label>
           <input type="number" id="tn-up-count" value="10" min="1" max="200" style="width:100%;margin-bottom:16px;">
@@ -742,9 +748,11 @@ async function pgSmsStats() {
 
       <!-- Filters -->
       <div class="cdr-panel">
-        <div class="cdr-row">
-          <input type="date" id="c-from" value="${today}">
-          <input type="date" id="c-to" value="${today}">
+        <div class="cdr-row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <label style="font-size:12px;font-weight:600;color:#64748b;">From:</label>
+          <input type="date" id="c-from" value="${today}" style="cursor:pointer;padding:5px 8px;min-width:130px;">
+          <label style="font-size:12px;font-weight:600;color:#64748b;">To:</label>
+          <input type="date" id="c-to" value="${today}" style="cursor:pointer;padding:5px 8px;min-width:130px;">
           <select id="c-range">
             <option value="">All Ranges</option>
             ${rangeOptions.map(r => `<option value="${r}">${r}</option>`).join('')}
@@ -754,7 +762,7 @@ async function pgSmsStats() {
         </div>
         <div class="cdr-row">
           <span class="grp-label">Group By</span>
-          ${['Date', 'Month', 'Range', 'Number', 'CLI'].map(g => `
+          ${['Date', 'Month', 'Year', 'Range', 'Number', 'CLI'].map(g => `
             <label class="cdr-chk"><input type="checkbox" id="g-${g.toLowerCase()}"> ${g}</label>
           `).join('')}
           <div style="margin-left:auto;display:flex;gap:6px;">
@@ -808,9 +816,9 @@ async function pgSmsStats() {
 let cdr_hidden_cols = {};
 
 function getCdrColumns() {
-  const activeGroups = ['date', 'month', 'range', 'number', 'cli'].filter(g => document.getElementById(`g-${g}`)?.checked);
+  const activeGroups = ['date', 'month', 'year', 'range', 'number', 'cli'].filter(g => document.getElementById(`g-${g}`)?.checked);
   if (activeGroups.length > 0) {
-    const keyLabels = { date: 'Date', month: 'Month', range: 'Range', number: 'Number', cli: 'CLI' };
+    const keyLabels = { date: 'Date', month: 'Month', year: 'Year', range: 'Range', number: 'Number', cli: 'CLI' };
     return activeGroups.map(k => ({ key: k, label: keyLabels[k] || k })).concat({ key: 'sms_count', label: 'SMS Count' });
   }
   return [
@@ -926,7 +934,7 @@ async function applyCdr() {
   if (nf) params.append('search', nf);
 
   let cdr_grouped_keys = [];
-  const activeGroups = ['date', 'month', 'range', 'number', 'cli'].filter(g => document.getElementById(`g-${g}`)?.checked);
+  const activeGroups = ['date', 'month', 'year', 'range', 'number', 'cli'].filter(g => document.getElementById(`g-${g}`)?.checked);
   if (activeGroups.length) {
     params.append('group_by', activeGroups.join(','));
   }
@@ -954,6 +962,7 @@ function cdrSearch(q) {
   const filtered = cdr_rows.filter(r =>
     (r.date || '').toLowerCase().includes(ql) ||
     (r.month || '').toLowerCase().includes(ql) ||
+    (r.year || '').toLowerCase().includes(ql) ||
     (r.range || '').toLowerCase().includes(ql) ||
     (r.number || '').includes(ql) ||
     (r.cli || '').toLowerCase().includes(ql) ||
@@ -970,7 +979,7 @@ function renderCdr() {
   const start = (cdr_pg - 1) * cdr_pp;
   const page = cdr_rows.slice(start, start + cdr_pp);
 
-  const activeGroups = ['date', 'month', 'range', 'number', 'cli'].filter(g => document.getElementById(`g-${g}`)?.checked);
+  const activeGroups = ['date', 'month', 'year', 'range', 'number', 'cli'].filter(g => document.getElementById(`g-${g}`)?.checked);
   const cols = getCdrColumns();
   const visibleCols = cols.filter(c => !cdr_hidden_cols[c.key]);
 

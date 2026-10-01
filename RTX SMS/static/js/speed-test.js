@@ -119,7 +119,9 @@ function toggleSidebar() { if (window.zyToggleSidebar) window.zyToggleSidebar();
 const TP_PAGES = {
   'dashboard':    () => tpDashboard(),
   'test-numbers': () => pgTestNumbers(),
-  'test-reports': () => pgTestCdrStats()
+  'test-reports': () => pgTestCdrStats(),
+  'my-profile':   () => { if (window.SpeedProfile) window.SpeedProfile.render('page-content'); },
+  'profile':      () => { if (window.SpeedProfile) window.SpeedProfile.render('page-content'); }
 };
 function loadPage(page) {
   const fn = TP_PAGES[page] || TP_PAGES['dashboard'];

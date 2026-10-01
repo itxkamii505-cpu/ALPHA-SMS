@@ -297,13 +297,13 @@ class PanelSession:
 
     @staticmethod
     def _dt_params(url, limit):
-        yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+        year_start = f"{datetime.now().year}-01-01"
         tomorrow = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
         p = {"sEcho": 1, "iColumns": 9, "iDisplayStart": 0, "iDisplayLength": limit,
              "iSortCol_0": 0, "sSortDir_0": "desc", "iSortingCols": 1,
              "_": int(time.time() * 1000)}
         if "cdr" in url.lower() or "sms" in url.lower():
-            p.update({"fdate1": f"{yesterday} 00:00:00", "fdate2": f"{tomorrow} 23:59:59",
+            p.update({"fdate1": f"{year_start} 00:00:00", "fdate2": f"{tomorrow} 23:59:59",
                       "frange": "", "fnum": "", "fcli": "", "fclient": "",
                       "fgdate": "", "fgmonth": "", "fgrange": "", "fgnumber": "",
                       "fgcli": "", "fg": 0})

@@ -405,9 +405,9 @@ async function pgDashboard() {
 
     // ── SMS Daily Stats ──
     const todaySms = dailyStats?.today || 0;
-    const yesterdaySms = dailyStats?.yesterday || 0;
     const thisWeekSms = dailyStats?.this_week || 0;
     const thisMonthSms = dailyStats?.this_month || 0;
+    const thisYearSms = dailyStats?.this_year || dailyStats?.all_time || 0;
 
     // ── Traffic data ──
     const trafficData = dailyStats?.weekly_traffic || stats?.traffic_data || Array.from({ length: 7 }, () => 0);
@@ -445,10 +445,10 @@ async function pgDashboard() {
 
       <!-- SMS Stats Grid - 4 Cards -->
       <div class="stats-grid" style="grid-template-columns:1fr;margin-bottom:24px;">
-        ${statCard('TODAY\'S SMS', 'fas fa-calendar-day', todaySms, 'green', 'Today')}
-        ${statCard('YESTERDAY', 'fas fa-calendar-day', yesterdaySms, 'yellow', 'Yesterday')}
-        ${statCard('SMS THIS WEEK', 'fas fa-calendar-week', thisWeekSms, 'blue', 'This week')}
-        ${statCard('THIS MONTH', 'fas fa-calendar-alt', thisMonthSms, 'purple', 'This month')}
+        ${statCard('TODAY\'S SMS', 'fas fa-calendar-day', todaySms, 'green', 'Daily')}
+        ${statCard('SMS THIS WEEK', 'fas fa-calendar-week', thisWeekSms, 'blue', 'Weekly')}
+        ${statCard('THIS MONTH', 'fas fa-calendar-alt', thisMonthSms, 'purple', 'Monthly')}
+        ${statCard('THIS YEAR', 'fas fa-calendar-check', thisYearSms, 'cyan', 'Yearly')}
       </div>
 
       <!-- Main Stats Grid - 6 Cards -->
@@ -1512,8 +1512,10 @@ async function pgSmsOverview() {
       <div class="card" style="margin-top:16px;">
         <div class="card-header"><div class="card-title">SMS CDR Stats</div></div>
         <div class="filters-bar" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <input type="date" id="mcdr-from" value="${new Date().toISOString().split('T')[0]}">
-          <input type="date" id="mcdr-to" value="${new Date().toISOString().split('T')[0]}">
+          <label style="font-size:12px;font-weight:600;color:var(--text-muted);">From:</label>
+          <input type="date" id="mcdr-from" value="${new Date().toISOString().split('T')[0]}" style="min-width:130px;cursor:pointer;">
+          <label style="font-size:12px;font-weight:600;color:var(--text-muted);">To:</label>
+          <input type="date" id="mcdr-to" value="${new Date().toISOString().split('T')[0]}" style="min-width:130px;cursor:pointer;">
           <input id="mcdr-num" placeholder="Search Number or Message">
           <input id="mcdr-cli" placeholder="Search CLI">
           <button class="btn btn-primary btn-sm" onclick="loadMgrCdr(1)"><i class="fas fa-chart-bar"></i> Show Report</button>
@@ -1597,7 +1599,7 @@ async function loadMgrCdr(page = 1) {
         ['DATE', 'RANGE', 'NUMBER', 'CLI', 'SMS', 'CURRENCY', 'PAYOUT'],
         logs.map(s => [
           fmtShort(s.timestamp),
-          s.range_label || `${s.country || ''}-${s.provider || ''}`,
+          s.range_name || s.range_label || s.range || s.country || '—',
           `<span class="monospace">${s.number || '—'}</span>`,
           s.cli || '—',
           `<span class="text-muted">${s.message || '—'}</span>`,
@@ -1936,7 +1938,11 @@ async function pgSmsTestPanel() {
           <div class="filters-bar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
             <select id="mg-tp-range" style="min-width:150px;" onchange="mgTpPage=1;loadMgTestNumbers()">
               <option value="">Select Range</option>
-              ${ranges.map(r => `<option value="${r.id}">${r.country || ''} ${r.prefix || ''}</option>`).join('')}
+              ${ranges.map(r => {
+                const rName = r.range_name || r.name || r.country || 'Range';
+                const extra = r.country && r.country !== rName ? ` (${r.country}${r.prefix ? ` ${r.prefix}` : ''})` : (r.prefix ? ` (${r.prefix})` : '');
+                return `<option value="${r.id}">${rName}${extra}</option>`;
+              }).join('')}
             </select>
             <button class="btn btn-outline btn-sm" onclick="mgTpPage=1;loadMgTestNumbers()"><i class="fas fa-filter"></i> Filter</button>
           </div>
@@ -2197,7 +2203,11 @@ async function pgNumbers(page = 1) {
         <div class="filters-bar" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
           <select id="num-range-filter" onchange="pgNumbers(1)" style="min-width:160px;">
             <option value="">Select Range</option>
-            ${myRanges.map(r => `<option value="${r.id}" ${rangeFilter == r.id ? 'selected' : ''}>${r.country || ''} ${r.prefix || ''}</option>`).join('')}
+            ${myRanges.map(r => {
+              const rName = r.range_name || r.name || r.country || 'Range';
+              const extra = r.country && r.country !== rName ? ` (${r.country}${r.prefix ? ` ${r.prefix}` : ''})` : (r.prefix ? ` (${r.prefix})` : '');
+              return `<option value="${r.id}" ${rangeFilter == r.id ? 'selected' : ''}>${rName}${extra}</option>`;
+            }).join('')}
           </select>
           ${zySelectSearch('num-client-filter', 'Search clients…')}
           <select id="num-client-filter" onchange="pgNumbers(1)" style="min-width:150px;">
@@ -2283,8 +2293,9 @@ function mgrBuildNumbersTable(numbers, rangeLookup, rateLookup, agents) {
     { key: 'payout', label: 'PAYOUT' }, { key: 'limits', label: 'LIMITS' }
   ];
   const agentLookup = {}; agents.forEach(a => agentLookup[a.id] = a.username);
+  const rangeById = {}; ranges.forEach(r => rangeById[r.id] = r);
   let rows = numbers.map(n => {
-    const rInfo = rangeLookup[`${n.country}|${n.provider}`] || null;
+    const rInfo = (n.range_id && rangeById[n.range_id]) ? rangeById[n.range_id] : (rangeLookup[`${n.country}|${n.provider}`] || null);
     const rateInfo = rateLookup[`${n.country}|${n.provider}`] || null;
     const clientLabel = n.client_name || n.client_username
       ? (n.client_name || n.client_username)
@@ -2297,8 +2308,8 @@ function mgrBuildNumbersTable(numbers, rangeLookup, rateLookup, agents) {
                         : (rateInfo && rateInfo.sell_rate != null) ? rateInfo.sell_rate
                         : (n.manager_payout != null ? n.manager_payout : (n.client_payout != null ? n.client_payout : null));
     return {
-      n, range: rInfo?.range_name || `${n.country || ''}-${n.provider || ''}`,
-      prefix: rInfo?.prefix || '—', number: n.number || '',
+      n, range: n.range_name || n.range_label || rInfo?.range_name || rInfo?.name || n.country || '—',
+      prefix: rInfo?.prefix || n.prefix || '—', number: n.number || '',
       my_payout: resolvedRate,
       range_term: rInfo?.payout_schedule || null,
       client: clientLabel,
@@ -2734,6 +2745,10 @@ async function atacAssignSelected() {
 // ═══════════════════════════════════════════════
 
 function pgProfile() {
+  if (window.SpeedProfile) {
+    window.SpeedProfile.render('page-content');
+    return;
+  }
   const c = document.getElementById('page-content');
   c.innerHTML = `
     <div class="page-header"><div><div class="page-title">My Profile</div></div></div>

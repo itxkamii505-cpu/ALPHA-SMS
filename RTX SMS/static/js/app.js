@@ -561,9 +561,9 @@ async function renderDashboard() {
     }
 
     const todaySms = dailyStats?.today || 0;
-    const yesterdaySms = dailyStats?.yesterday || 0;
     const thisWeekSms = dailyStats?.this_week || 0;
     const thisMonthSms = dailyStats?.this_month || 0;
+    const thisYearSms = dailyStats?.this_year || dailyStats?.year || stats?.this_year_sms || 0;
 
     const trafficData = dailyStats?.weekly_traffic || stats?.traffic_data || Array.from({ length: 7 }, () => 0);
     const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -605,10 +605,10 @@ async function renderDashboard() {
       </div>
 
       <div class="stats-grid" style="grid-template-columns:1fr;margin-bottom:24px;">
-        ${statCard('TODAY\'S SMS', 'fas fa-calendar-day', todaySms, 'green', 'Today')}
-        ${statCard('YESTERDAY', 'fas fa-calendar-day', yesterdaySms, 'yellow', 'Yesterday')}
-        ${statCard('SMS THIS WEEK', 'fas fa-calendar-week', thisWeekSms, 'blue', 'This week')}
-        ${statCard('THIS MONTH', 'fas fa-calendar-alt', thisMonthSms, 'purple', 'This month')}
+        ${statCard('TODAY\'S SMS', 'fas fa-calendar-day', todaySms, 'green', 'Daily')}
+        ${statCard('SMS THIS WEEK', 'fas fa-calendar-week', thisWeekSms, 'blue', 'Weekly')}
+        ${statCard('THIS MONTH', 'fas fa-calendar-alt', thisMonthSms, 'purple', 'Monthly')}
+        ${statCard('THIS YEAR', 'fas fa-calendar-check', thisYearSms, 'cyan', 'Yearly')}
       </div>
 
       <div class="stats-grid" style="grid-template-columns:1fr;margin-bottom:24px;">
@@ -1668,7 +1668,11 @@ async function renderMyNumbers(page = 1, search = '', status = '') {
         <div class="filters-bar" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
           <select id="num-range-filter" onchange="renderMyNumbers(1,document.getElementById('num-search').value,document.getElementById('num-status').value)" style="min-width:160px;">
             <option value="">Select Range</option>
-            ${ranges.map(r => `<option value="${r.id}" ${rangeFilter == r.id ? 'selected' : ''}>${r.country || ''} ${r.prefix || ''}</option>`).join('')}
+            ${ranges.map(r => {
+              const rName = r.range_name || r.name || r.country || 'Range';
+              const extra = r.country && r.country !== rName ? ` (${r.country}${r.prefix ? ` ${r.prefix}` : ''})` : (r.prefix ? ` (${r.prefix})` : '');
+              return `<option value="${r.id}" ${rangeFilter == r.id ? 'selected' : ''}>${rName}${extra}</option>`;
+            }).join('')}
           </select>
           ${zySelectSearch('num-client-filter', 'Search clients…')}
           <select id="num-client-filter" onchange="renderMyNumbers(1,document.getElementById('num-search').value,document.getElementById('num-status').value)" style="min-width:150px;">
@@ -1780,7 +1784,7 @@ function adminBuildNumbersTable(numbers, rangeLookup, rateLookup, search, status
     if (!ownerLabel && n.agent_id && agentLookup[n.agent_id]) ownerLabel = `${agentLookup[n.agent_id]} (Agent)`;
     if (!ownerLabel && n.manager_id && managerLookup[n.manager_id]) ownerLabel = `${managerLookup[n.manager_id]} (Manager)`;
     return {
-      n, range: rInfo?.range_name || n.range_name || `${n.country || ''}-${n.provider || ''}`,
+      n, range: n.range_name || n.range_label || rInfo?.range_name || rInfo?.name || n.country || '—',
       prefix: rInfo?.prefix || n.prefix || '—', number: n.number || '',
       my_payout: rateInfo ? rateInfo.buy_rate : null,
       range_term: rInfo?.payout_schedule || null,
@@ -2376,9 +2380,10 @@ async function doAdminDeleteRange(rangeId) {
 function openAddRangeModal() {
   openModal('Add SMS Range', `
     <form id="add-range-form" onsubmit="submitAddRange(event)">
-      <div class="form-group"><label class="form-label">Country *</label><input id="range-country" placeholder="US" required></div>
-      <div class="form-group"><label class="form-label">Provider *</label><input id="range-provider" placeholder="Twilio" required></div>
-      <div class="form-group"><label class="form-label">Prefix *</label><input id="range-prefix" placeholder="+1" required></div>
+      <div class="form-group"><label class="form-label">Range Name *</label><input id="range-name" placeholder="e.g. Peru_KB1" required></div>
+      <div class="form-group"><label class="form-label">Country *</label><input id="range-country" placeholder="e.g. Peru" required></div>
+      <div class="form-group"><label class="form-label">Provider</label><input id="range-provider" placeholder="e.g. Telecom (optional)"></div>
+      <div class="form-group"><label class="form-label">Prefix *</label><input id="range-prefix" placeholder="e.g. 519" required></div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Cost/SMS</label><input type="number" id="range-cost" placeholder="0.003" step="0.0001"></div>
         <div class="form-group"><label class="form-label">Payout/SMS</label><input type="number" id="range-payout" placeholder="0.002" step="0.0001"></div>
@@ -2395,11 +2400,12 @@ async function submitAddRange(event) {
   event.preventDefault();
 
   try {
+    const range_name = document.getElementById('range-name').value.trim();
     const country = document.getElementById('range-country').value.trim();
-    const provider = document.getElementById('range-provider').value.trim();
+    const provider = document.getElementById('range-provider').value.trim() || 'Manual';
     const prefix = document.getElementById('range-prefix').value.trim();
 
-    if (!country || !provider || !prefix) {
+    if (!country || !prefix) {
       toast('Please fill all required fields', 'error');
       return;
     }
@@ -2411,6 +2417,8 @@ async function submitAddRange(event) {
     }
 
     const payload = {
+      range_name: range_name || country,
+      name: range_name || country,
       country,
       provider,
       prefix,
@@ -2445,8 +2453,9 @@ async function submitAddRange(event) {
 function openEditRangeModal(r) {
   openModal('Edit SMS Range', `
     <form id="edit-range-form" onsubmit="submitEditRange(event, ${r.id})">
+      <div class="form-group"><label class="form-label">Range Name *</label><input id="er-name" value="${r.range_name || r.name || ''}" required></div>
       <div class="form-group"><label class="form-label">Country *</label><input id="er-country" value="${r.country || ''}" required></div>
-      <div class="form-group"><label class="form-label">Provider *</label><input id="er-provider" value="${r.provider || ''}" required></div>
+      <div class="form-group"><label class="form-label">Provider</label><input id="er-provider" value="${r.provider || ''}"></div>
       <div class="form-group"><label class="form-label">Prefix *</label><input id="er-prefix" value="${r.prefix || ''}" required></div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Cost/SMS</label><input type="number" id="er-cost" value="${r.cost || 0}" step="0.0001"></div>
@@ -2481,9 +2490,12 @@ async function submitEditRange(event, rangeId) {
     const btn = document.getElementById('er-submit-btn');
     if (btn) { btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> Saving...'; }
 
+    const range_name = document.getElementById('er-name').value.trim();
     const payload = {
+      range_name: range_name,
+      name: range_name,
       country: document.getElementById('er-country').value.trim(),
-      provider: document.getElementById('er-provider').value.trim(),
+      provider: document.getElementById('er-provider').value.trim() || 'Manual',
       prefix: document.getElementById('er-prefix').value.trim(),
       cost: parseFloat(document.getElementById('er-cost').value) || 0,
       payout: parseFloat(document.getElementById('er-payout').value) || 0,
@@ -2740,7 +2752,7 @@ function renderUploadTabContent() {
             <select id="ex-range" onchange="toggleNewRangeFields()">
               <option value="">Select range…</option>
               <option value="__new__">+ Create New Range…</option>
-              ${ranges.map(r => `<option value="${r.id}">${r.range_name || (r.country + ' ' + r.provider)}</option>`).join('')}
+              ${ranges.map(r => `<option value="${r.id}">${r.range_name || r.name || r.country}</option>`).join('')}
             </select>
           </div>
           <div class="form-group">
@@ -3293,7 +3305,7 @@ async function renderTestPanelNumbers(page = 1) {
           ${buildTable(
             ['Range', 'Number', 'Added', 'Actions'],
             numbers.map(n => [
-              n.range_label || `${n.country || ''}-${n.provider || ''}`,
+              n.range_name || n.range_label || n.range || n.country || '—',
               `<span class="monospace fw-600">${n.number || '—'}</span>`,
               fmtShort(n.created),
               `<button class="btn-icon" onclick="removeTestPanelNumber(${n.id})" title="Remove"><i class="fas fa-trash" style="color:var(--red-light);"></i></button>`
@@ -3452,7 +3464,7 @@ function openTestPanelUploadModal() {
       <div class="form-group"><label class="form-label">Range *</label>
         <select id="tp-up-range" required>
           <option value="">— Select Range —</option>
-          ${(ranges || []).map(r => `<option value="${r.id}">${r.country || ''} ${r.prefix || ''} — ${r.provider || ''}</option>`).join('')}
+          ${(ranges || []).map(r => `<option value="${r.id}">${r.range_name || r.name || r.country} (${r.prefix || ''})</option>`).join('')}
         </select></div>
       <div class="form-group"><label class="form-label">How many numbers</label>
         <input type="number" id="tp-up-count" value="10" min="1" max="200"></div>
@@ -3555,7 +3567,11 @@ async function renderSmsTestPanel() {
           <div class="filters-bar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
             <select id="ad-tp-range" style="min-width:150px;" onchange="adTpPage=1;loadAdTestNumbers()">
               <option value="">Select Range</option>
-              ${ranges.map(r => `<option value="${r.id}">${r.country || ''} ${r.prefix || ''}</option>`).join('')}
+              ${ranges.map(r => {
+                const rName = r.range_name || r.name || r.country || 'Range';
+                const extra = r.country && r.country !== rName ? ` (${r.country}${r.prefix ? ` ${r.prefix}` : ''})` : (r.prefix ? ` (${r.prefix})` : '');
+                return `<option value="${r.id}">${rName}${extra}</option>`;
+              }).join('')}
             </select>
             <button class="btn btn-outline btn-sm" onclick="adTpPage=1;loadAdTestNumbers()"><i class="fas fa-filter"></i> Filter</button>
           </div>
@@ -3710,17 +3726,21 @@ async function renderMySms(page = 1, dateFrom = null, dateTo = null) {
   c.innerHTML = `
     <div class="zy-intro">Here You can view all the sms stats and grouped metrics.</div>
     <div class="zy-filterbox">
-      <input class="zy-fb-input" id="rp-from" value="${todayStr} 00:00:00">
-      <input class="zy-fb-input" id="rp-to" value="${todayStr} 23:59:59">
-      <select class="zy-fb-input" id="rp-range"><option value="">Filter Range</option></select>
-      <select class="zy-fb-input" id="rp-manager"><option value="">Filter Manager</option></select>
-      <select class="zy-fb-input" id="rp-agent"><option value="">Filter Agent</option></select>
-      <select class="zy-fb-input" id="rp-client"><option value="">Filter Client</option></select>
-      <input class="zy-fb-input" id="rp-num" placeholder="Search Number">
-      <input class="zy-fb-input" id="rp-cli" placeholder="Search CLI">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <label style="font-size:12px;font-weight:700;color:var(--text-secondary,#64748b);">From Date:</label>
+        <input type="date" class="zy-fb-input" id="rp-from" value="${todayStr}" style="cursor:pointer;padding:6px 10px;font-weight:600;min-width:130px;">
+        <label style="font-size:12px;font-weight:700;color:var(--text-secondary,#64748b);">To Date:</label>
+        <input type="date" class="zy-fb-input" id="rp-to" value="${todayStr}" style="cursor:pointer;padding:6px 10px;font-weight:600;min-width:130px;">
+        <select class="zy-fb-input" id="rp-range"><option value="">Filter Range</option></select>
+        <select class="zy-fb-input" id="rp-manager"><option value="">Filter Manager</option></select>
+        <select class="zy-fb-input" id="rp-agent"><option value="">Filter Agent</option></select>
+        <select class="zy-fb-input" id="rp-client"><option value="">Filter Client</option></select>
+        <input class="zy-fb-input" id="rp-num" placeholder="Search Number">
+        <input class="zy-fb-input" id="rp-cli" placeholder="Search CLI">
+      </div>
       <div class="zy-groupby"><b>Group By :</b>
-        ${['Date', 'Month', 'Range', 'Manager', 'Agent', 'Client', 'Number', 'CLI'].map(g =>
-          `<label><input type="checkbox" class="grp-chk" value="${g.toLowerCase()}" onchange="renderMySmsLoad()"> ${g}</label>`).join('')}
+        ${['Date', 'Month', 'Year', 'Range', 'Manager', 'Agent', 'Client', 'Number', 'CLI'].map(g =>
+          `<label><input type="checkbox" class="grp-chk" value="${g.toLowerCase()}"> ${g}</label>`).join('')}
       </div>
       <div class="zy-fb-btns">
         <button class="zy-btn-orange" onclick="typeof zy2Export === 'function' ? zy2Export('dt-cdr','csv') : null">Export Report</button>
@@ -3729,7 +3749,7 @@ async function renderMySms(page = 1, dateFrom = null, dateTo = null) {
     </div>
     <div class="zy-panel">
       <div class="zy-panel-head">SMS CDR Reports &amp; Stats</div>
-      <div class="zy-panel-body" id="rp-body"><div class="zy-loading">Loading…</div></div>
+      <div class="zy-panel-body" id="rp-body"><div class="zy-empty" style="padding:40px;text-align:center;color:var(--text-muted,#64748b);"><i class="fas fa-chart-bar" style="font-size:32px;margin-bottom:12px;display:block;opacity:0.6;"></i>Select filters above and click <b>Show Report</b> to view SMS stats.</div></div>
     </div>
   `;
 
@@ -3749,7 +3769,11 @@ async function renderMySms(page = 1, dateFrom = null, dateTo = null) {
     const rEl = document.getElementById('rp-range');
     if (rEl) {
       rEl.innerHTML = '<option value="">Filter Range</option>' +
-        ranges.map(r => `<option value="${r.id}">${r.name || `${r.country || ''} ${r.prefix || ''}`.trim() || r.id}</option>`).join('');
+        ranges.map(r => {
+          const rName = r.range_name || r.name || r.country || 'Range';
+          const extra = r.country && r.country !== rName ? ` (${r.country}${r.prefix ? ` ${r.prefix}` : ''})` : (r.prefix ? ` (${r.prefix})` : '');
+          return `<option value="${r.id}">${rName}${extra}</option>`;
+        }).join('');
     }
 
     const mEl = document.getElementById('rp-manager');
@@ -3771,10 +3795,6 @@ async function renderMySms(page = 1, dateFrom = null, dateTo = null) {
     }
   } catch (e) {
     console.warn('Failed to populate dropdowns:', e);
-  }
-
-  if (typeof renderMySmsLoad === 'function') {
-    renderMySmsLoad();
   }
 }
 
@@ -4197,11 +4217,17 @@ async function renderDeliveryLogs(page = 1) {
       </div>
       <div class="card">
         <div class="filters-bar" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <input type="date" id="cdr-from" value="${dateFrom}">
-          <input type="date" id="cdr-to" value="${dateTo}">
+          <label style="font-size:12px;font-weight:600;color:var(--text-muted);">From:</label>
+          <input type="date" id="cdr-from" value="${dateFrom}" style="min-width:130px;cursor:pointer;">
+          <label style="font-size:12px;font-weight:600;color:var(--text-muted);">To:</label>
+          <input type="date" id="cdr-to" value="${dateTo}" style="min-width:130px;cursor:pointer;">
           <select id="cdr-range" style="min-width:140px;">
             <option value="">Filter Range</option>
-            ${rangesList.map(r => `<option value="${r.id}" ${rangeFilter == r.id ? 'selected' : ''}>${r.country || ''} ${r.prefix || ''}</option>`).join('')}
+            ${rangesList.map(r => {
+              const rName = r.range_name || r.name || r.country || 'Range';
+              const extra = r.country && r.country !== rName ? ` (${r.country}${r.prefix ? ` ${r.prefix}` : ''})` : (r.prefix ? ` (${r.prefix})` : '');
+              return `<option value="${r.id}" ${rangeFilter == r.id ? 'selected' : ''}>${rName}${extra}</option>`;
+            }).join('')}
           </select>
           <input id="cdr-num" placeholder="Search Number or Message" value="${numSearch}">
           <input id="cdr-cli" placeholder="Search CLI" value="${cliSearch}">
@@ -4210,10 +4236,10 @@ async function renderDeliveryLogs(page = 1) {
           <span style="font-size:12px;color:var(--text-muted);font-weight:600;">Group By:</span>
           ${['date','month','range','agent','number','cli'].map(g => `
             <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;">
-              <input type="radio" name="cdr-group" value="${g}" ${adminCdrGroupBy === g ? 'checked' : ''} onchange="adminCdrGroupBy=this.value;renderDeliveryLogs(1)"> ${g.charAt(0).toUpperCase()+g.slice(1)}
+              <input type="radio" name="cdr-group" value="${g}" ${adminCdrGroupBy === g ? 'checked' : ''} onchange="adminCdrGroupBy=this.value"> ${g.charAt(0).toUpperCase()+g.slice(1)}
             </label>`).join('')}
           <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;">
-            <input type="radio" name="cdr-group" value="" ${adminCdrGroupBy === '' ? 'checked' : ''} onchange="adminCdrGroupBy='';renderDeliveryLogs(1)"> None
+            <input type="radio" name="cdr-group" value="" ${adminCdrGroupBy === '' ? 'checked' : ''} onchange="adminCdrGroupBy=''"> None
           </label>
           <div style="margin-left:auto;display:flex;gap:8px;">
             <button class="btn btn-warning btn-sm" onclick="window.open('/api/numbers/download','_blank')"><i class="fas fa-download"></i> Export Report</button>
@@ -4249,7 +4275,7 @@ async function renderDeliveryLogs(page = 1) {
           ['DATE', 'RANGE', 'NUMBER', 'CLI', 'SMS', 'CURRENCY', 'PAYOUT'],
           logs.map(s => [
             fmtShort(s.timestamp),
-            s.range_label || `${s.country || ''}-${s.provider || ''}`,
+            s.range_name || s.range_label || s.range || s.country || '—',
             `<span class="monospace">${s.number || '—'}</span>`,
             s.cli || '—',
             `<span class="text-muted">${s.message || '—'}</span>`,
@@ -6837,6 +6863,10 @@ async function renderSupportTickets() {
 
 // ─── MY PROFILE ───────────────────────────────────────────────────
 function renderMyProfile() {
+  if (window.SpeedProfile) {
+    window.SpeedProfile.render('page-content');
+    return;
+  }
   const user = JSON.parse(sessionStorage.getItem('admin_user') || '{}');
   const c = document.getElementById('page-content');
   c.innerHTML = `
@@ -7290,6 +7320,8 @@ async function renderGeneralSettings() {
     ];
 
     const presets = [
+      { key: 'clean_white_slate', name: 'Clean White & Midnight Dashboard (Default)', c1: '#475569', s1: 0, c2: '#1e293b', s2: 50, c3: '#0f172a', s3: 100, a: '180deg', txt: '#ffffff', desc: 'Pure White Workspace + Bold Black Fonts (Top Dashboard & Sidebar Accent Only)' },
+      { key: 'midnight_slate', name: 'Midnight Slate Elite', c1: '#64748b', s1: 0, c2: '#334155', s2: 50, c3: '#0f172a', s3: 100, a: '180deg', txt: '#ffffff', desc: 'Silver Slate, Gunmetal, Onyx' },
       { key: 'green_wave', name: 'Signature 3-Color Wave', c1: '#78B800', s1: 0, c2: '#005c90', s2: 60, c3: '#2B4300', s3: 100, a: '180deg', txt: '#ffffff', desc: 'Lime Green, Deep Blue, Dark Forest' },
       { key: 'emerald_lime', name: 'Emerald Lime Glow', c1: '#8FE51F', s1: 0, c2: '#059669', s2: 50, c3: '#064e3b', s3: 100, a: '180deg', txt: '#ffffff', desc: 'Neon Lime, Emerald Green, Forest' },
       { key: 'sunset_amber', name: 'Sunset Amber & Rust', c1: '#f59e0b', s1: 0, c2: '#d97706', s2: 45, c3: '#991b1b', s3: 100, a: '180deg', txt: '#ffffff', desc: 'Gold, Amber Orange, Deep Crimson' },
@@ -7312,9 +7344,9 @@ async function renderGeneralSettings() {
         </div>
       </div>
 
-      <div class="two-col" style="grid-template-columns: 1fr 1.35fr; gap: 20px; align-items: start;">
+      <div class="settings-two-col">
         <!-- Left Column: Brand & System Settings -->
-        <div style="display:flex; flex-direction:column; gap:20px;">
+        <div style="display:flex; flex-direction:column; gap:20px; width:100%;">
           <!-- Brand & Identity -->
           <div class="card">
             <div class="card-header" style="border-bottom:1px solid #eef2f6;padding-bottom:12px;margin-bottom:16px;">
@@ -7335,28 +7367,28 @@ async function renderGeneralSettings() {
             <div class="form-group">
               <label class="form-label" style="font-weight:600;">Brand Logo & Icon</label>
               <div style="background:#f8fafc;padding:16px;border-radius:12px;border:1.5px dashed #cbd5e1;display:flex;flex-direction:column;gap:12px;">
-                <div style="display:flex;align-items:center;gap:16px;">
+                <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
                   <div style="width:80px;height:80px;background:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.08);padding:8px;position:relative;border:1px solid #e2e8f0;flex-shrink:0;">
                     <img id="logo-preview-img" src="${curLogo}" alt="Logo Preview" style="max-height:100%;max-width:100%;object-fit:contain;">
                   </div>
-                  <div style="flex:1;">
-                    <div style="font-size:13.5px;font-weight:700;color:#0f172a;margin-bottom:4px;display:flex;align-items:center;gap:8px;">
+                  <div style="flex:1;min-width:200px;">
+                    <div style="font-size:13.5px;font-weight:700;color:#0f172a;margin-bottom:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                       <span>Upload Picture Directly to Project</span>
                       <span class="badge badge-black" style="font-size:10px;padding:2px 8px;background:#0284c7;color:#fff;"><i class="fas fa-database"></i> Permanent Storage</span>
                     </div>
                     <div style="font-size:11.5px;color:#64748b;margin-bottom:8px;line-height:1.4;">
-                      Picture project ke andar (<code style="background:#e2e8f0;padding:1px 4px;border-radius:3px;">RTX SMS/static/img/custom-logo.png</code>) aur database me permanent store hogi. Agar aap PC se original file delete bhi kar den, logo yahan se kabhi remove nahi hoga!
+                      Image will be permanently stored in project assets (<code>Alpha SMS/static/img/custom-logo.png</code>) and database. It remains active across all panels even if original local files are moved.
                     </div>
                     <input type="file" id="logo-file-input" accept="image/*" onchange="directUploadLogo(event)" style="font-size:12px;display:block;margin-bottom:10px;">
                     <div style="display:flex;gap:8px;flex-wrap:wrap;">
                       <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('logo-file-input').click()" style="font-size:11.5px;padding:6px 12px;background:#0284c7;color:#fff;border:none;">
-                        <i class="fas fa-upload" style="margin-right:4px;"></i> 1-Click Upload Picture
+                        <i class="fas fa-upload" style="margin-right:4px;"></i> Upload Picture
                       </button>
                       <button type="button" class="btn btn-outline btn-sm" onclick="resetDefaultLogo()" style="font-size:11.5px;padding:6px 10px;" title="Standard wide logo">
-                        <i class="fas fa-image" style="margin-right:4px;"></i> Wide Logo (چوڑا لوگو)
+                        <i class="fas fa-image" style="margin-right:4px;"></i> Wide Logo
                       </button>
                       <button type="button" class="btn btn-outline btn-sm" onclick="setCircleLogo()" style="font-size:11.5px;padding:6px 10px;" title="Round circular badge logo">
-                        <i class="fas fa-circle-notch" style="margin-right:4px;"></i> Round Logo (گول لوگو)
+                        <i class="fas fa-circle-notch" style="margin-right:4px;"></i> Round Logo
                       </button>
                       <button type="button" class="btn btn-outline btn-sm" onclick="cropCurrentLogo()" style="font-size:11.5px;padding:6px 12px;">
                         <i class="fas fa-crop-alt" style="margin-right:4px;"></i> Crop & Adjust
@@ -7435,7 +7467,7 @@ async function renderGeneralSettings() {
         </div>
 
         <!-- Right Column: Unified Theme, Multi-Color Wave & Typography Studio -->
-        <div class="card" style="position:sticky; top:20px;">
+        <div class="card settings-sticky-card">
           <div class="card-header" style="border-bottom:1px solid #eef2f6;padding-bottom:12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
             <div class="card-title">
               <i class="fas fa-palette" style="color:var(--brand-primary,#5E9800);margin-right:6px;"></i> Theme, Multi-Color Wave & Typography Studio
@@ -7478,7 +7510,7 @@ async function renderGeneralSettings() {
             </div>
 
             <!-- Sample Sidebar Item & Profile Dropdown Preview -->
-            <div style="margin-top:12px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div class="settings-subgrid-2" style="margin-top:12px;">
               <!-- Sidebar Parent Item -->
               <div>
                 <div style="font-size:10px; color:#64748b; margin-bottom:4px; font-weight:600; text-transform:uppercase;">Sidebar Group Item</div>
@@ -7518,7 +7550,7 @@ async function renderGeneralSettings() {
             </p>
 
             <!-- 3 Color Stops Grid -->
-            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;">
+            <div class="settings-stops-grid">
               <!-- Color Stop 1 -->
               <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -7595,7 +7627,7 @@ async function renderGeneralSettings() {
               <span class="text-muted fs-11">Header & Sidebar Font Customization</span>
             </div>
 
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px;">
+            <div class="settings-subgrid-2">
               <!-- Header & Sidebar Font Color -->
               <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -7642,7 +7674,7 @@ async function renderGeneralSettings() {
             </div>
 
             <!-- Accent Theme & Mode Row -->
-            <div style="margin-top:12px; display:grid; grid-template-columns: 1fr 1fr; gap:14px;">
+            <div class="settings-subgrid-2" style="margin-top:12px;">
               <!-- Accent Glow Color -->
               <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px;">
                 <span style="font-size:11px; font-weight:700; color:#334155; display:block; margin-bottom:6px;">Accent Theme (Buttons & Badges)</span>
@@ -7682,7 +7714,7 @@ async function renderGeneralSettings() {
               <span class="text-muted fs-11">Click any preset to auto-fill and fine-tune</span>
             </div>
 
-            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:8px;">
+            <div class="settings-presets-grid">
               ${presets.map(item => `
                 <div onclick="applyPreset('${item.key}')" style="border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px; cursor:pointer; background:#fff; transition:all .2s ease; box-shadow:0 1px 3px rgba(0,0,0,0.04);" onmouseover="this.style.borderColor='var(--brand-primary,#0284c7)'; this.style.transform='translateY(-1px)';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.transform='translateY(0)';">
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">

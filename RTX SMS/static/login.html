@@ -260,6 +260,31 @@ body {
   transform: none;
 }
 
+.login-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+.login-modal-content {
+  background: #ffffff;
+  border-radius: 16px;
+  max-width: 400px;
+  width: 100%;
+  padding: 24px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+  animation: modalFadeIn 0.2s ease-out;
+}
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 @media (max-width: 440px) {
   .login-card {
     padding: 34px 22px 30px;
@@ -299,6 +324,15 @@ body {
       </button>
     </div>
 
+    <!-- 2FA Code Input (Revealed if account has 2FA enabled) -->
+    <div id="twoFaWrap" style="display:none; margin-bottom: 16px;">
+      <div class="pill-input-wrap" style="border-color: #0284c7; box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);">
+        <i class="fas fa-shield-alt pill-icon" style="color: #0284c7;"></i>
+        <input type="text" id="twoFaCode" name="two_fa_code" placeholder="2FA code" autocomplete="one-time-code" maxlength="8">
+      </div>
+      <div id="twoFaHint" style="font-size: 12px; color: #ef4444; font-weight: 600; margin-top: 4px; padding-left: 12px;">Enter your 2FA code.</div>
+    </div>
+
     <!-- Inline Math Captcha -->
     <div class="captcha-container">
       <span class="captcha-question" id="captchaQuestion">What is 12 + 5 =</span>
@@ -312,8 +346,48 @@ body {
 
     <!-- Green LOGIN Button -->
     <button type="submit" class="login-btn-green" id="submitBtn">LOGIN</button>
+
+    <!-- Forgot Password Link -->
+    <div style="text-align: center; margin-top: 14px;">
+      <a href="javascript:void(0)" id="forgotPassBtn" style="color: #64748b; font-size: 13px; text-decoration: none; font-weight: 600; transition: color 0.15s;">Forgot Password?</a>
+    </div>
   </form>
 </main>
+
+<!-- Forgot Password Modal -->
+<div id="forgotModal" class="login-modal" style="display:none;">
+  <div class="login-modal-content">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+      <h3 style="margin:0; font-size: 18px; font-weight: 700; color: #111827;">Reset Password</h3>
+      <button type="button" id="closeForgotModal" style="background:none; border:none; font-size: 18px; color: #64748b; cursor:pointer;"><i class="fas fa-times"></i></button>
+    </div>
+    <div id="forgotAlert" style="display:none; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 12px;"></div>
+    
+    <!-- Step 1: Enter Username or Bound Email -->
+    <div id="forgotStep1">
+      <p style="font-size: 13px; color: #64748b; margin-top:0; margin-bottom: 14px;">Enter your username or bound email address to receive a 6-digit verification OTP code.</p>
+      <div class="pill-input-wrap" style="margin-bottom: 14px;">
+        <i class="fas fa-user pill-icon"></i>
+        <input type="text" id="forgotIdentifier" placeholder="Username or Bound Email" required>
+      </div>
+      <button type="button" class="login-btn-green" id="sendForgotOtpBtn" style="height: 44px; font-size: 14px;">SEND CODE</button>
+    </div>
+
+    <!-- Step 2: Enter OTP + New Password -->
+    <div id="forgotStep2" style="display:none;">
+      <p style="font-size: 13px; color: #64748b; margin-top:0; margin-bottom: 12px;" id="forgotStep2Msg">Enter the 6-digit OTP code sent to your email.</p>
+      <div class="pill-input-wrap" style="margin-bottom: 12px;">
+        <i class="fas fa-key pill-icon"></i>
+        <input type="text" id="forgotOtp" placeholder="6-digit OTP code" maxlength="6" required>
+      </div>
+      <div class="pill-input-wrap" style="margin-bottom: 14px;">
+        <i class="fas fa-lock pill-icon"></i>
+        <input type="password" id="forgotNewPass" placeholder="New Password (optional/auto-generated)">
+      </div>
+      <button type="button" class="login-btn-green" id="verifyForgotResetBtn" style="height: 44px; font-size: 14px;">RESET PASSWORD</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // Synchronous instant brand load (zero lag / zero flash)
@@ -426,6 +500,9 @@ loginForm.addEventListener('submit', async (e) => {
     return;
   }
 
+  const twoFaInp = document.getElementById('twoFaCode');
+  const twoFaCode = (twoFaInp ? twoFaInp.value : '').trim();
+
   submitBtn.disabled = true;
   submitBtn.textContent = 'LOGGING IN...';
 
@@ -433,10 +510,27 @@ loginForm.addEventListener('submit', async (e) => {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: u, password: p })
+      body: JSON.stringify({ username: u, password: p, two_fa_code: twoFaCode })
     });
 
     const data = await res.json();
+
+    // ── If account requires 2FA code ──
+    if (data.require_2fa) {
+      const wrap = document.getElementById('twoFaWrap');
+      if (wrap) wrap.style.display = 'block';
+      if (data.error) {
+        showError(data.error);
+      } else {
+        hideError();
+      }
+      if (twoFaInp) {
+        twoFaInp.focus();
+      }
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'LOGIN';
+      return;
+    }
 
     if (!res.ok || !data.success) {
       showError(data.error || data.detail || 'Invalid username or password');
@@ -482,6 +576,124 @@ loginForm.addEventListener('submit', async (e) => {
     submitBtn.textContent = 'LOGIN';
   }
 });
+
+// ── FORGOT PASSWORD MODAL LOGIC ─────────────────────────────────
+const forgotModal = document.getElementById('forgotModal');
+const forgotPassBtn = document.getElementById('forgotPassBtn');
+const closeForgotModal = document.getElementById('closeForgotModal');
+const forgotAlert = document.getElementById('forgotAlert');
+const forgotStep1 = document.getElementById('forgotStep1');
+const forgotStep2 = document.getElementById('forgotStep2');
+const sendForgotOtpBtn = document.getElementById('sendForgotOtpBtn');
+const verifyForgotResetBtn = document.getElementById('verifyForgotResetBtn');
+
+function showForgotAlert(msg, isSuccess = false) {
+  if (!forgotAlert) return;
+  forgotAlert.textContent = msg;
+  forgotAlert.style.display = 'block';
+  forgotAlert.style.background = isSuccess ? '#ecfdf5' : '#fef2f2';
+  forgotAlert.style.color = isSuccess ? '#065f46' : '#991b1b';
+  forgotAlert.style.border = isSuccess ? '1px solid #a7f3d0' : '1px solid #fecaca';
+}
+
+if (forgotPassBtn) {
+  forgotPassBtn.addEventListener('click', () => {
+    if (forgotModal) forgotModal.style.display = 'flex';
+    if (forgotAlert) forgotAlert.style.display = 'none';
+    if (forgotStep1) forgotStep1.style.display = 'block';
+    if (forgotStep2) forgotStep2.style.display = 'none';
+    const idField = document.getElementById('forgotIdentifier');
+    if (idField) {
+      idField.value = username ? username.value : '';
+      idField.focus();
+    }
+  });
+}
+
+if (closeForgotModal) {
+  closeForgotModal.addEventListener('click', () => {
+    if (forgotModal) forgotModal.style.display = 'none';
+  });
+}
+
+if (sendForgotOtpBtn) {
+  sendForgotOtpBtn.addEventListener('click', async () => {
+    const ident = (document.getElementById('forgotIdentifier').value || '').trim();
+    if (!ident) {
+      showForgotAlert('Please enter your username or bound email.');
+      return;
+    }
+    sendForgotOtpBtn.disabled = true;
+    sendForgotOtpBtn.textContent = 'SENDING...';
+    try {
+      const res = await fetch('/api/auth/forgot-password/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: ident })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        showForgotAlert(data.error || 'Failed to send OTP code.');
+        sendForgotOtpBtn.disabled = false;
+        sendForgotOtpBtn.textContent = 'SEND CODE';
+        return;
+      }
+
+      showForgotAlert(`OTP code sent to ${data.masked_email || 'your email'}. Enter it below:`, true);
+      forgotStep1.style.display = 'none';
+      forgotStep2.style.display = 'block';
+      const otpInp = document.getElementById('forgotOtp');
+      if (otpInp) {
+        if (data.dev_code) otpInp.value = data.dev_code;
+        otpInp.focus();
+      }
+    } catch (err) {
+      showForgotAlert('Network error while requesting reset code.');
+      sendForgotOtpBtn.disabled = false;
+      sendForgotOtpBtn.textContent = 'SEND CODE';
+    }
+  });
+}
+
+if (verifyForgotResetBtn) {
+  verifyForgotResetBtn.addEventListener('click', async () => {
+    const ident = (document.getElementById('forgotIdentifier').value || '').trim();
+    const code = (document.getElementById('forgotOtp').value || '').trim();
+    const newPass = (document.getElementById('forgotNewPass').value || '').trim();
+
+    if (!code) {
+      showForgotAlert('Please enter the 6-digit OTP code.');
+      return;
+    }
+    verifyForgotResetBtn.disabled = true;
+    verifyForgotResetBtn.textContent = 'RESETTING...';
+
+    try {
+      const res = await fetch('/api/auth/forgot-password/verify-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: ident, code: code, new_password: newPass })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        showForgotAlert(data.error || 'Invalid OTP code.');
+        verifyForgotResetBtn.disabled = false;
+        verifyForgotResetBtn.textContent = 'RESET PASSWORD';
+        return;
+      }
+
+      showForgotAlert(`Password reset successful! Temporary password: ${data.temp_password || newPass}. You can now login.`, true);
+      if (password) password.value = data.temp_password || newPass;
+      setTimeout(() => {
+        if (forgotModal) forgotModal.style.display = 'none';
+      }, 2500);
+    } catch (err) {
+      showForgotAlert('Network error while resetting password.');
+      verifyForgotResetBtn.disabled = false;
+      verifyForgotResetBtn.textContent = 'RESET PASSWORD';
+    }
+  });
+}
 </script>
 
 </body>

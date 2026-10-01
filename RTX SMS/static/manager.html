@@ -26,6 +26,7 @@
 </script>
 <script src="/static/js/brand-theme.js"></script>
 <script src="/static/js/speed-auth-guard.js"></script>
+<script src="/static/js/speed-profile-security.js"></script>
 <script>
   if (window.SpeedAuth) {
     window.SpeedAuth.enforce(['Manager']);
@@ -62,7 +63,7 @@
 
   <header class="zy-header">
     <div class="zy-header-row">
-      <a class="zy-logo" onclick="loadPage('dashboard')" id="zy-logo"></a>
+      <div class="zy-logo" id="zy-logo" style="cursor: default; user-select: none;"></div>
       <div class="zy-head-right">
         <button class="zy-hamb" onclick="zyToggleMenu()" title="Menu">
           <span></span><span></span><span></span>

@@ -314,7 +314,7 @@ pgDashboard = async function () {
       .sort((a, b) => (b.today_otp || 0) - (a.today_otp || 0)).slice(0, 5);
 
     const rangeRows = rangeList.map(r => [
-      { v: r.name || r.range_name || '—', h: r.name || r.range_name || '—' },
+      { v: r.range_name || r.name || r.country || '—', h: r.range_name || r.name || r.country || '—' },
       { v: r.prefix || r.prefix_code || '', h: r.prefix || r.prefix_code || '' }
     ]);
 

@@ -379,10 +379,10 @@ renderDashboard = async function () {
       ['My Numbers',  't_calc',    'my-numbers']
     ];
     const strips = [
-      ['Yesterday SMS',  'stat_today', d.yesterday || 0],
+      ['Daily SMS',      'stat_today', d.today || s.total_sms_today || 0],
       ['SMS This Week',  'stat_7day',  d.this_week || 0],
       ['SMS This Month', 'stat_30day', d.this_month || 0],
-      ['SMS This Year',  'stat_30day', d.all_time || 0]
+      ['SMS This Year',  'stat_30day', d.this_year || d.all_time || 0]
     ];
     const circles = [
       ['NEW ACCOUNTS',       'circ_accounts', s.active_users || 0],
@@ -394,7 +394,7 @@ renderDashboard = async function () {
 
     const rangeRows = (Array.isArray(ranges) ? ranges : ((ranges && ranges.data) || []))
       .slice(0, 25).map(r => [
-        r.name || `${r.country || ''} ${r.provider || ''}`.trim(),
+        r.range_name || r.name || r.country || '—',
         r.prefix || '', r.payterm || '7/1', r.payout != null ? r.payout : ''
       ]);
     const agtRows = ((agents && agents.data) || []).slice(0, 25).map(a => [
@@ -478,20 +478,25 @@ renderMySms = async function () {
   const bc = document.getElementById('breadcrumb');
   if (bc) bc.textContent = 'SMS CDR Stats';
 
+    const curToday = (typeof zyToday === 'function' ? zyToday() : new Date().toISOString().slice(0, 10));
   c.innerHTML = `
     <div class="zy-intro">Here You can view all the sms stats and grouped metrics.</div>
     <div class="zy-filterbox">
-      <input class="zy-fb-input" id="rp-from" value="${typeof zyToday === 'function' ? zyToday() : new Date().toISOString().slice(0, 10)} 00:00:00">
-      <input class="zy-fb-input" id="rp-to" value="${typeof zyToday === 'function' ? zyToday() : new Date().toISOString().slice(0, 10)} 23:59:59">
-      <select class="zy-fb-input" id="rp-range"><option value="">Filter Range</option></select>
-      <select class="zy-fb-input" id="rp-manager"><option value="">Filter Manager</option></select>
-      <select class="zy-fb-input" id="rp-agent"><option value="">Filter Agent</option></select>
-      <select class="zy-fb-input" id="rp-client"><option value="">Filter Client</option></select>
-      <input class="zy-fb-input" id="rp-num" placeholder="Search Number">
-      <input class="zy-fb-input" id="rp-cli" placeholder="Search CLI">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <label style="font-size:12px;font-weight:700;color:var(--text-secondary,#64748b);">From Date:</label>
+        <input type="date" class="zy-fb-input" id="rp-from" value="${curToday}" style="cursor:pointer;padding:6px 10px;font-weight:600;min-width:130px;">
+        <label style="font-size:12px;font-weight:700;color:var(--text-secondary,#64748b);">To Date:</label>
+        <input type="date" class="zy-fb-input" id="rp-to" value="${curToday}" style="cursor:pointer;padding:6px 10px;font-weight:600;min-width:130px;">
+        <select class="zy-fb-input" id="rp-range"><option value="">Filter Range</option></select>
+        <select class="zy-fb-input" id="rp-manager"><option value="">Filter Manager</option></select>
+        <select class="zy-fb-input" id="rp-agent"><option value="">Filter Agent</option></select>
+        <select class="zy-fb-input" id="rp-client"><option value="">Filter Client</option></select>
+        <input class="zy-fb-input" id="rp-num" placeholder="Search Number">
+        <input class="zy-fb-input" id="rp-cli" placeholder="Search CLI">
+      </div>
       <div class="zy-groupby"><b>Group By :</b>
-        ${['Date', 'Month', 'Range', 'Manager', 'Agent', 'Client', 'Number', 'CLI'].map(g =>
-          `<label><input type="checkbox" class="grp-chk" value="${g.toLowerCase()}" onchange="renderMySmsLoad()"> ${g}</label>`).join('')}
+        ${['Date', 'Month', 'Year', 'Range', 'Manager', 'Agent', 'Client', 'Number', 'CLI'].map(g =>
+          `<label><input type="checkbox" class="grp-chk" value="${g.toLowerCase()}"> ${g}</label>`).join('')}
       </div>
       <div class="zy-fb-btns">
         <button class="zy-btn-orange" onclick="zy2Export('dt-cdr','csv')">Export Report</button>
@@ -500,7 +505,7 @@ renderMySms = async function () {
     </div>
     <div class="zy-panel">
       <div class="zy-panel-head">SMS CDR Reports &amp; Stats</div>
-      <div class="zy-panel-body" id="rp-body"><div class="zy-loading">Loading…</div></div>
+      <div class="zy-panel-body" id="rp-body"><div class="zy-empty" style="padding:40px;text-align:center;color:var(--text-muted,#64748b);"><i class="fas fa-chart-bar" style="font-size:32px;margin-bottom:12px;display:block;opacity:0.6;"></i>Select filters above and click <b>Show Report</b> to view SMS stats.</div></div>
     </div>
   `;
 
@@ -543,8 +548,6 @@ renderMySms = async function () {
   } catch (e) {
     console.warn('Failed to populate dropdowns in SMS CDR Stats:', e);
   }
-
-  renderMySmsLoad();
 };
 
 async function renderMySmsLoad() {
@@ -581,7 +584,9 @@ async function renderMySmsLoad() {
     if (logs && logs.grouped && checkedBoxes.length) {
       const keyLabels = {
         date: 'Date',
+        daily: 'Date',
         month: 'Month',
+        year: 'Year',
         range: 'Range',
         manager: 'Manager',
         agent: 'Agent',
@@ -651,3 +656,4 @@ async function renderMySmsLoad() {
     body.innerHTML = '<div class="zy-empty">Failed to load SMS CDR stats.</div>';
   }
 }
+
