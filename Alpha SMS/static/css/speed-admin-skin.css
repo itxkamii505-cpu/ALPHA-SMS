@@ -214,3 +214,15 @@
   color: #333; border-bottom: 1px solid #c4c4c4;
 }
 .adminui .zy-chart-title { color: #333; font-size: 17px; }
+
+@media (max-width: 991px) {
+  .adminui .zy-dash-panels,
+  .adminui .zy-dash-mid,
+  .adminui .zy-strips,
+  .adminui .zy-tiles {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 14px !important;
+  }
+}

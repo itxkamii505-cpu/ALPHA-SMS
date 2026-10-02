@@ -85,7 +85,7 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S"
 )
 
-app = FastAPI(title="MAIT SMS", version="2.0.0")
+app = FastAPI(title="ALPHA SMS", version="2.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -3811,9 +3811,9 @@ async def export_backup():
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
         for f in sorted(data_dir.glob("*.json")):
             zf.write(f, arcname=f"data/{f.name}")
-        # A manifest so restore can sanity-check it's a real MAIT SMS backup
+        # A manifest so restore can sanity-check it's a real ALPHA SMS backup
         manifest = {
-            "app": "MAIT SMS", "exported_at": datetime.utcnow().isoformat(),
+            "app": "ALPHA SMS", "exported_at": datetime.utcnow().isoformat(),
             "files": [f.name for f in sorted(data_dir.glob("*.json"))]
         }
         zf.writestr("manifest.json", json.dumps(manifest, indent=2))
@@ -3844,7 +3844,7 @@ async def restore_backup(file: UploadFile = File(...)):
     names = zf.namelist()
     json_entries = [n for n in names if n.startswith("data/") and n.endswith(".json")]
     if not json_entries:
-        raise HTTPException(400, "This doesn't look like an MAIT SMS backup — no data/*.json files found inside")
+        raise HTTPException(400, "This doesn't look like an ALPHA SMS backup — no data/*.json files found inside")
 
     # Safety copy of current state before overwriting anything
     data_dir = Path("data")

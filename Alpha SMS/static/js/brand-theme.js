@@ -240,8 +240,8 @@
       const sep = curTitle.includes('—') ? ' — ' : ' | ';
       const parts = curTitle.split(sep);
       document.title = parts[0].trim() + sep + siteName;
-    } else if (curTitle.includes('𝑴𝑨𝑰𝑻 𝑺𝑴𝑺') || curTitle.includes('MAIT SMS') || curTitle.includes('RTX SMS') || curTitle.includes('ALPHA SMS')) {
-      document.title = curTitle.replace(/𝑴𝑨𝑰𝑻 𝑺𝑴𝑺|MAIT SMS|RTX SMS|ALPHA SMS|Astra SMS|ASTRA SMS/g, siteName);
+    } else if (curTitle.includes('ALPHA SMS') || curTitle.includes('ALPHA SMS') || curTitle.includes('Alpha SMS') || curTitle.includes('ALPHA SMS')) {
+      document.title = curTitle.replace(/ALPHA SMS|ALPHA SMS|Alpha SMS|ALPHA SMS|Astra SMS|ASTRA SMS/g, siteName);
     } else if (!curTitle) {
       document.title = siteName;
     }

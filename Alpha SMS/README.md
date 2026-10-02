@@ -1,4 +1,4 @@
-# MAIT SMS ADMIN PANEL 
+# ALPHA SMS ADMIN PANEL 
 
 A complete admin panel for OTP/virtual number management.
 

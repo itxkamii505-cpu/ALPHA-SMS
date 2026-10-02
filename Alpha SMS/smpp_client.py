@@ -301,7 +301,7 @@ class SmppConnection:
 
 
 class SmppServer:
-    """The MAIT SMS panel acts as the SMSC (server) here — carriers connect
+    """The ALPHA SMS panel acts as the SMSC (server) here — carriers connect
     OUTBOUND to us using the host/port/system_id/password they were given
     (shown on the carrier's own SMPP client config screen), and we accept
     the bind, then receive their messages as submit_sm or deliver_sm PDUs.

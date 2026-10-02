@@ -1,7 +1,7 @@
 """
 login_panel_client.py — "Login Panel" connections.
 
-Instead of an SMPP bind, MAIT SMS logs into ANOTHER provider's web panel with the
+Instead of an SMPP bind, ALPHA SMS logs into ANOTHER provider's web panel with the
 username/password saved in the admin panel, and reads the SMS/OTP rows from
 its CDR page.
 

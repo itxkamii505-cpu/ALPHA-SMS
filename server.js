@@ -45,9 +45,7 @@ function broadcastWs(data) {
 }
 
 const PORT = 3000;
-const ALPHA_DIR = fs.existsSync(path.join(__dirname, 'Alpha SMS'))
-  ? path.join(__dirname, 'Alpha SMS')
-  : path.join(__dirname, 'RTX SMS');
+const ALPHA_DIR = path.join(__dirname, 'Alpha SMS');
 const RTX_DIR = ALPHA_DIR; // backward compatibility
 const STATIC_DIR = path.join(ALPHA_DIR, 'static');
 const DATA_DIR = path.join(ALPHA_DIR, 'data');
@@ -702,7 +700,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve static assets from RTX SMS/static with revalidation
+// Serve static assets from Alpha SMS/static with revalidation
 const staticOpts = {
   etag: false,
   lastModified: true,
